@@ -183,6 +183,7 @@
 								: scoredAdv
 									? 'half'
 									: 'miss'}
+					{@const wPct = teamGroupWinPct(id)}
 					<div
 						class="trow"
 						class:rwin={state === 'ok'}
@@ -193,7 +194,6 @@
 						<span class="pos">{i + 1}</span>
 						<Flag iso2={fs.team(id)?.iso2 ?? ''} code={fs.team(id)?.fifaCode ?? ''} />
 						<span class="nm">{tname(id)}</span>
-						{@const wPct = teamGroupWinPct(id)}
 						{#if wPct}<span class="wpct">{wPct}</span>{/if}
 						<span class="tag">
 							{#if state === 'ok'}<span class="ind ok"><Check size={15} /></span>
