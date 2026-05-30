@@ -7,7 +7,7 @@
 		type="button"
 		class="btn install"
 		class:outlined={!pwa.dismissed}
-		aria-label="Installer VM Tipping"
+		aria-label="Installer WC Pool"
 		onclick={() => pwa.install()}
 	>
 		Installer

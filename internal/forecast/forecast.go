@@ -111,19 +111,29 @@ type ThirdSlot struct {
 	Allowed  []string `json:"allowed"` // group letters eligible (fallback only)
 }
 
-// sharesLeague reports whether users a and b are both members of at least
-// one common League.
-func sharesLeague(app core.App, a, b string) bool {
+// canViewForecast reports whether user 'viewer' may see 'target's forecast.
+// Access is granted when they share at least one league that does not have
+// hideForecast enabled. If every shared league has hideForecast=true (or they
+// share no league at all), access is denied.
+func canViewForecast(app core.App, viewer, target string) bool {
 	mine, err := app.FindRecordsByFilter("league_members",
-		"user = {:u}", "", 0, 0, map[string]any{"u": a})
+		"user = {:u}", "", 0, 0, map[string]any{"u": viewer})
 	if err != nil {
 		return false
 	}
 	for _, m := range mine {
+		leagueID := m.GetString("league")
 		if _, err := app.FindFirstRecordByFilter("league_members",
 			"league = {:l} && user = {:u}",
-			map[string]any{"l": m.GetString("league"), "u": b}); err == nil {
-			return true
+			map[string]any{"l": leagueID, "u": target}); err != nil {
+			continue // target not in this league
+		}
+		league, err := app.FindRecordById("leagues", leagueID)
+		if err != nil {
+			continue
+		}
+		if !league.GetBool("hideForecast") {
+			return true // found a shared league where forecasts are visible
 		}
 	}
 	return false
@@ -150,8 +160,8 @@ func Register(app core.App, se *core.ServeEvent) {
 	// which stays own-only.
 	se.Router.GET("/api/forecast/of/{userId}", func(e *core.RequestEvent) error {
 		uid := e.Request.PathValue("userId")
-		if uid != e.Auth.Id && !sharesLeague(app, e.Auth.Id, uid) {
-			return apis.NewForbiddenError("not in a league with this player", nil)
+		if uid != e.Auth.Id && !canViewForecast(app, e.Auth.Id, uid) {
+			return apis.NewForbiddenError("forecast not available", nil)
 		}
 		u, err := app.FindRecordById("users", uid)
 		if err != nil {

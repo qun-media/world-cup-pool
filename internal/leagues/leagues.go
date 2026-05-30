@@ -116,6 +116,18 @@ func isAppSuperuser(app core.App, user *core.Record) bool {
 	return err == nil
 }
 
+// canManageLeague reports whether the authenticated user may change settings
+// for the given league: the owner for private leagues, any superuser for global.
+func canManageLeague(app core.App, user *core.Record, league *core.Record) bool {
+	if user == nil {
+		return false
+	}
+	if league.GetString("inviteCode") == GlobalInviteCode {
+		return isAppSuperuser(app, user)
+	}
+	return league.GetString("owner") == user.Id
+}
+
 func requireInviteManager(app core.App, e *core.RequestEvent, leagueID string) (*core.Record, error) {
 	league, err := app.FindRecordById("leagues", leagueID)
 	if err != nil {
@@ -325,6 +337,34 @@ func Register(app core.App, se *core.ServeEvent) {
 		return e.NoContent(http.StatusNoContent)
 	})
 
+	// PATCH /api/leagues/{id}/settings
+	g.PATCH("/{id}/settings", func(e *core.RequestEvent) error {
+		id := e.Request.PathValue("id")
+		league, err := app.FindRecordById("leagues", id)
+		if err != nil {
+			return bad(e, http.StatusNotFound, "league not found")
+		}
+		if !canManageLeague(app, e.Auth, league) {
+			return bad(e, http.StatusForbidden, "not authorized to manage this league")
+		}
+		var body struct {
+			HideForecast *bool `json:"hideForecast"`
+		}
+		if err := e.BindBody(&body); err != nil {
+			return bad(e, http.StatusBadRequest, err.Error())
+		}
+		if body.HideForecast != nil {
+			league.Set("hideForecast", *body.HideForecast)
+		}
+		if err := app.Save(league); err != nil {
+			return err
+		}
+		return e.JSON(http.StatusOK, map[string]any{
+			"id":           league.Id,
+			"hideForecast": league.GetBool("hideForecast"),
+		})
+	})
+
 	// GET /api/leagues/mine
 	g.GET("/mine", func(e *core.RequestEvent) error {
 		members, err := app.FindRecordsByFilter("league_members",
@@ -341,11 +381,13 @@ func Register(app core.App, se *core.ServeEvent) {
 			cnt, _ := app.CountRecords("league_members",
 				dbx.HashExp{"league": lg.Id})
 			out = append(out, map[string]any{
-				"id":         lg.Id,
-				"name":       lg.GetString("name"),
-				"inviteCode": lg.GetString("inviteCode"),
-				"role":       m.GetString("role"),
-				"members":    cnt,
+				"id":           lg.Id,
+				"name":         lg.GetString("name"),
+				"inviteCode":   lg.GetString("inviteCode"),
+				"role":         m.GetString("role"),
+				"members":      cnt,
+				"hideForecast": lg.GetBool("hideForecast"),
+				"isAdmin":      canManageLeague(app, e.Auth, lg),
 			})
 		}
 		return e.JSON(http.StatusOK, map[string]any{"leagues": out})
@@ -559,8 +601,8 @@ func Register(app core.App, se *core.ServeEvent) {
 		if err != nil {
 			return bad(e, http.StatusNotFound, "league not found")
 		}
-		// Include the league's scoring config so the legend can render it
-		// without the client reading the (now members-only) leagues table.
+		// Include league settings so the client can render the legend and
+		// apply access control without a separate request.
 		if lg, err := app.FindRecordById("leagues", id); err == nil {
 			cid := lg.GetString("scoringConfig")
 			var sc *core.Record
@@ -576,6 +618,8 @@ func Register(app core.App, se *core.ServeEvent) {
 					lb["scoring"] = cfg
 				}
 			}
+			lb["hideForecast"] = lg.GetBool("hideForecast")
+			lb["isAdmin"] = canManageLeague(app, e.Auth, lg)
 		}
 		return e.JSON(http.StatusOK, lb)
 	})

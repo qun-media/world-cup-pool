@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="nn">
+<html lang="en">
 	<head>
 		<meta charset="utf-8" />
 		<link rel="icon" href="%sveltekit.assets%/favicon.svg" />
@@ -16,10 +16,17 @@
 		<script>
 			(function () {
 				try {
-					var t = localStorage.getItem('theme') || 'light';
-					if (t === 'light' || t === 'dark' || t === 'worldcup')
+					var t = localStorage.getItem('theme');
+					if (t === 'light' || t === 'dark' || t === 'worldcup') {
 						document.documentElement.setAttribute('data-theme', t);
-				} catch (e) {}
+					} else {
+						// No stored preference — detect system, default to dark if undetectable.
+						var dark = !window.matchMedia || window.matchMedia('(prefers-color-scheme: dark)').matches;
+						document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+					}
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
 			})();
 		</script>
 		<meta name="mobile-web-app-capable" content="yes" />
@@ -28,8 +35,8 @@
 			name="apple-mobile-web-app-status-bar-style"
 			content="black-translucent"
 		/>
-		<meta name="apple-mobile-web-app-title" content="VM Tipping" />
-		<title>VM Tipping</title>
+		<meta name="apple-mobile-web-app-title" content="WC Pool" />
+		<title>WC Pool</title>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

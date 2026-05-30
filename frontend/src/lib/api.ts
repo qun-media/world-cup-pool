@@ -15,6 +15,8 @@ export interface LeagueSummary {
 	inviteCode: string;
 	role: string;
 	members: number;
+	hideForecast: boolean;
+	isAdmin: boolean;
 }
 
 export interface LeagueInviteUser {
@@ -192,12 +194,16 @@ export const api = {
 		),
 	declineLeagueInvitation: (inviteId: string) =>
 		post<void>(`/api/leagues/invitations/${inviteId}/decline`, {}),
+	updateLeagueSettings: (id: string, settings: { hideForecast?: boolean }) =>
+		pb.send(`/api/leagues/${id}/settings`, { method: 'PATCH', body: settings }),
 	chatOverview: () => get<{ items: ChatOverviewItem[] }>('/api/chat/overview'),
 	leaderboard: (id: string) =>
 		get<{
 			league: { id: string; name: string };
 			rows: LeaderboardRow[];
 			scoring?: Record<string, unknown>;
+			hideForecast?: boolean;
+			isAdmin?: boolean;
 		}>(`/api/leagues/${id}/leaderboard`),
 	leagueProgress: (id: string) =>
 		get<LeagueProgress>(`/api/leagues/${id}/progress`),

@@ -233,7 +233,7 @@ export const strings: Record<
 		},
 		search: {
 			trigger: 'Søk',
-			panelAria: 'Søk i VM Tipping',
+			panelAria: 'Søk i WC Pool',
 			placeholder: 'Søk kamp, lag, gruppe eller liga',
 			close: 'Lukk søk',
 			loading: 'Lastar søk…',
@@ -246,11 +246,11 @@ export const strings: Record<
 			noLeagues: 'Ingen ligaer'
 		},
 		pwa: {
-			installTitle: 'Installer VM Tipping',
+			installTitle: 'Installer WC Pool',
 			installBody: 'Appikon på heimskjermen, fullskjerm og raskare start.',
 			installButton: 'Installer',
 			close: 'Lukk',
-			iosTitle: 'Legg VM Tipping til på heimskjermen',
+			iosTitle: 'Legg WC Pool til på heimskjermen',
 			iosStep1: 'Trykk på Del-knappen i Safari-verktøylinja.',
 			iosStep2: 'Bla ned og vel Legg til på heimskjerm.',
 			iosStep3: 'Trykk Legg til øvst til høgre.',
@@ -258,7 +258,7 @@ export const strings: Record<
 		},
 		introCard: {
 			kicker: 'Ny i appen?',
-			title: 'Velkomen til VM Tipping',
+			title: 'Velkomen til WC Pool',
 			body: 'Tipp kampane, bli med i ligaer og følg poenga dine gjennom VM.',
 			leaguesTitle: 'Ligaer',
 			leaguesBody: 'Opprett eller bli med med kode.',
@@ -394,7 +394,7 @@ export const strings: Record<
 		},
 		search: {
 			trigger: 'Search',
-			panelAria: 'Search in VM Tipping',
+			panelAria: 'Search in WC Pool',
 			placeholder: 'Search match, team, group or league',
 			close: 'Close search',
 			loading: 'Loading search…',
@@ -407,11 +407,11 @@ export const strings: Record<
 			noLeagues: 'No leagues'
 		},
 		pwa: {
-			installTitle: 'Install VM Tipping',
+			installTitle: 'Install WC Pool',
 			installBody: 'Home screen icon, full screen, and faster start.',
 			installButton: 'Install',
 			close: 'Close',
-			iosTitle: 'Add VM Tipping to the home screen',
+			iosTitle: 'Add WC Pool to the home screen',
 			iosStep1: 'Tap the Share button in the Safari toolbar.',
 			iosStep2: 'Scroll down and choose Add to Home Screen.',
 			iosStep3: 'Tap Add in the top right corner.',
@@ -419,7 +419,7 @@ export const strings: Record<
 		},
 		introCard: {
 			kicker: 'New here?',
-			title: 'Welcome to VM Tipping',
+			title: 'Welcome to WC Pool',
 			body: 'Pick matches, join leagues, and follow your points through the World Cup.',
 			leaguesTitle: 'Leagues',
 			leaguesBody: 'Create one or join with a code.',

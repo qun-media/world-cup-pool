@@ -60,6 +60,8 @@
 	let id = $derived($page.params.id ?? '');
 	let league = $state<{ id: string; name: string } | null>(null);
 	let role = $state('');
+	let isAdmin = $state(false);
+	let hideForecast = $state(false);
 	let rows = $state<LeaderboardRow[]>([]);
 	let invite = $state('');
 	let loaded = $state(false);
@@ -75,6 +77,8 @@
 	let inviteSearchBusy = $state(false);
 	let inviteSendBusy = $state('');
 	let inviteError = $state('');
+	let settingsBusy = $state(false);
+	let settingsError = $state('');
 
 	$effect(() => {
 		const lid = id;
@@ -85,11 +89,14 @@
 		inviteCandidates = [];
 		pendingInvites = [];
 		inviteError = '';
+		settingsError = '';
 		Promise.all([api.leaderboard(lid), api.myLeagues()])
 			.then(([lb, mine]) => {
 				league = lb.league;
 				rows = lb.rows;
 				cfg = (lb.scoring as Cfg | undefined) ?? null;
+				hideForecast = lb.hideForecast ?? false;
+				isAdmin = lb.isAdmin ?? false;
 				const mineLeague = mine.leagues.find((l) => l.id === lid);
 				invite = mineLeague?.inviteCode ?? '';
 				role = mineLeague?.role ?? '';
@@ -158,6 +165,21 @@
 		linkCopied = true;
 		clearTimeout(copyTimer);
 		copyTimer = setTimeout(() => (linkCopied = false), 1800);
+	}
+
+	async function toggleHideForecast() {
+		if (!league) return;
+		settingsBusy = true;
+		settingsError = '';
+		const next = !hideForecast;
+		try {
+			await api.updateLeagueSettings(league.id, { hideForecast: next });
+			hideForecast = next;
+		} catch {
+			settingsError = isEnglish ? 'Could not save settings.' : 'Kunne ikkje lagre innstillingane.';
+		} finally {
+			settingsBusy = false;
+		}
 	}
 
 	async function deleteLeague() {
@@ -277,14 +299,16 @@
 							<div class="pwrap">
 								<Avatar name={r.name} src={r.avatarUrl} size={28} />
 								<span class="pname">{r.name}</span>
-								<a
-									class="fclink"
-									href={`/forecast/${r.userId}`}
-									title={isEnglish ? `View ${r.name}'s World Cup tips` : `Sjå VM-tipset til ${r.name}`}
-									onclick={(e) => e.stopPropagation()}
-								>
-									<Telescope size={15} />
-								</a>
+								{#if !hideForecast || r.userId === auth.user?.id}
+									<a
+										class="fclink"
+										href={`/forecast/${r.userId}`}
+										title={isEnglish ? `View ${r.name}'s World Cup tips` : `Sjå VM-tipset til ${r.name}`}
+										onclick={(e) => e.stopPropagation()}
+									>
+										<Telescope size={15} />
+									</a>
+								{/if}
 								<ChevronDown size={14} class="rx" />
 							</div>
 						</td>
@@ -444,6 +468,35 @@
 			{/if}
 
 			{#if inviteError}<p class="error">{inviteError}</p>{/if}
+		</section>
+	{/if}
+
+	{#if isAdmin}
+		<section class="card settings-zone">
+			<h3>{isEnglish ? 'League settings' : 'Ligainnstillingar'}</h3>
+
+			<label class="toggle-row">
+				<span class="toggle-label">
+					<b>{isEnglish ? 'Hide forecasts from members' : 'Skjul VM-tips for medlemmer'}</b>
+					<span class="muted small">
+						{isEnglish
+							? 'When on, members cannot view each other\'s pre-tournament bracket predictions.'
+							: 'Når aktiv, kan ikkje medlemmar sjå kvarandre sine VM-tips.'}
+					</span>
+				</span>
+				<button
+					class="toggle-btn"
+					class:on={hideForecast}
+					disabled={settingsBusy}
+					aria-pressed={hideForecast}
+					aria-label={isEnglish ? 'Toggle hide forecasts' : 'Veksle skjul VM-tips'}
+					onclick={toggleHideForecast}
+				>
+					<span class="toggle-thumb"></span>
+				</button>
+			</label>
+
+			{#if settingsError}<p class="error">{settingsError}</p>{/if}
 		</section>
 	{/if}
 
@@ -626,6 +679,57 @@
 	}
 	.pending-list .kicker {
 		margin: 0.25rem 0 0;
+	}
+	.settings-zone h3 {
+		margin: 0 0 1rem;
+	}
+	.toggle-row {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		cursor: pointer;
+	}
+	.toggle-label {
+		display: grid;
+		gap: 0.2rem;
+		flex: 1;
+	}
+	.toggle-label b {
+		font-weight: 600;
+	}
+	.toggle-btn {
+		flex: none;
+		position: relative;
+		width: 44px;
+		height: 26px;
+		border-radius: 999px;
+		border: 2px solid var(--border);
+		background: var(--surface-2);
+		cursor: pointer;
+		transition: background 0.18s, border-color 0.18s;
+		padding: 0;
+	}
+	.toggle-btn.on {
+		background: var(--accent);
+		border-color: var(--accent);
+	}
+	.toggle-btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+	.toggle-thumb {
+		position: absolute;
+		top: 2px;
+		left: 2px;
+		width: 18px;
+		height: 18px;
+		border-radius: 50%;
+		background: var(--text);
+		transition: transform 0.18s;
+	}
+	.toggle-btn.on .toggle-thumb {
+		transform: translateX(18px);
+		background: var(--bg);
 	}
 	.danger-zone {
 		border-color: color-mix(in srgb, var(--danger) 35%, var(--border));

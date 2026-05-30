@@ -9,9 +9,9 @@ export function isLanguageCode(value: unknown): value is LanguageCode {
 }
 
 function readStoredLanguage(): LanguageCode {
-	if (!browser) return 'nn';
+	if (!browser) return 'en';
 	const stored = localStorage.getItem(STORAGE_KEY);
-	return isLanguageCode(stored) ? stored : 'nn';
+	return isLanguageCode(stored) ? stored : 'en';
 }
 
 class LanguageStore {

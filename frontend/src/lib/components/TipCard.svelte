@@ -10,7 +10,6 @@
 	import { vibrate } from '$lib/haptics';
 	import Flag from './Flag.svelte';
 	import Stepper from './Stepper.svelte';
-	import TvLogo from './TvLogo.svelte';
 	import { teamDisplayName } from '$lib/teamNames';
 	import { Lock, ChevronDown, Check, Users } from '@lucide/svelte';
 	import { language } from '$lib/language.svelte';
@@ -285,10 +284,7 @@
 					: match.roundLabel} · {kickoff}</span
 			>
 			<span class="spacer"></span>
-			{#if match.tvChannel}
-				<TvLogo channel={match.tvChannel} compact />
-			{/if}
-			{#if played}
+{#if played}
 				<span class="pill done" class:perfect={pts === 6}>
 					FT
 					{#if pts !== undefined}

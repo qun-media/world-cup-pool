@@ -81,7 +81,7 @@
 </script>
 
 <svelte:head>
-	<title>{isEnglish ? 'About the game' : 'Info om spelet'} · VM Tipping</title>
+	<title>{isEnglish ? 'About the game' : 'Info om spelet'} · WC Pool</title>
 </svelte:head>
 
 <div class="info-page">
@@ -93,7 +93,7 @@
 	<section class="hero" aria-labelledby="info-title">
 		<div class="hero-copy">
 			<p class="kicker">Info</p>
-			<h1 id="info-title">{isEnglish ? 'How VM Tipping works' : 'Slik fungerer VM Tipping'}</h1>
+			<h1 id="info-title">{isEnglish ? 'How WC Pool works' : 'Slik fungerer WC Pool'}</h1>
 			<p class="lead">
 				{isEnglish
 					? 'Pick the full World Cup before kickoff, enter match tips before every game, and compete with friends in leagues as the tournament rolls on.'

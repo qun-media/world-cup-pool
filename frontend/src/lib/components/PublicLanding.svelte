@@ -58,7 +58,7 @@
 </script>
 
 <svelte:head>
-	<title>{isEnglish ? 'VM Tipping' : 'VM Tipping'}</title>
+	<title>WC Pool</title>
 	<meta
 		name="description"
 		content={isEnglish
