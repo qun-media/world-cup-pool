@@ -18,7 +18,7 @@
 	import Flag from '$lib/components/Flag.svelte';
 	import PendingInvites from '$lib/components/PendingInvites.svelte';
 	import PublicLanding from '$lib/components/PublicLanding.svelte';
-	import TvLogo from '$lib/components/TvLogo.svelte';
+
 	import {
 		Activity,
 		Clock,
@@ -232,7 +232,8 @@
 			d.getDate() === today.getDate();
 		const time = d.toLocaleTimeString(locale, {
 			hour: '2-digit',
-			minute: '2-digit'
+			minute: '2-digit',
+			hourCycle: 'h23'
 		});
 		if (sameDay) return `${isEnglish ? 'Today' : 'I dag'}, ${time}`;
 		return (
@@ -285,7 +286,7 @@
 		const diff = now - then;
 		if (diff < 60_000) return isEnglish ? 'now' : 'no';
 		if (diff < 3_600_000) return `${Math.floor(diff / 60_000)} min`;
-		if (diff < 86_400_000) return new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(then);
+		if (diff < 86_400_000) return new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(then);
 		return new Intl.DateTimeFormat(locale, { day: '2-digit', month: 'short' }).format(then);
 	}
 	function chatPreview(text: string) {
@@ -919,8 +920,7 @@
 				<div class="now-meta">
 					<span>{stageLabel(nowHero.match)}</span>
 					<span>{kickoffLabel(nowHero.match.kickoff)}</span>
-					{#if nowHero.match.tvChannel}<TvLogo channel={nowHero.match.tvChannel} compact />{/if}
-				</div>
+					</div>
 			</div>
 		{/if}
 
@@ -1117,7 +1117,7 @@
 	{#if !tournamentFinished && fs.loaded}
 		<section class="card tile forecast-pulse-card home-span-support" class:urgent={forecastPulse.tone === 'urgent'} class:out={forecastPulse.tone === 'out'}>
 			<div class="hd">
-				<h3 style="flex:1"><Telescope size={15} style="margin-right:0.35rem;vertical-align:-2px;color:var(--gold)" /> {forecastPulse.kicker}: {forecastPulse.title}</h3>
+				<h3 style="flex:1"><Telescope size={15} style="margin-right:0.35rem;vertical-align:-2px;color:var(--gold)" /> {forecastPulse.kicker}:<br />{forecastPulse.title}</h3>
 				<a class="hdlink" href="/forecast">{forecastPulse.label}</a>
 			</div>
 			<p class="muted forecast-copy">{forecastPulse.body}</p>
@@ -1179,7 +1179,6 @@
 						<span class="ready-meta">
 							<span>{kickoffLabel(match.kickoff)}</span>
 							<span class="spacer"></span>
-							{#if match.tvChannel}<TvLogo channel={match.tvChannel} compact />{/if}
 							{#if tipsStore.tips[match.id]}
 								<i class="ready-state ok">{isEnglish ? 'Submitted' : 'Tipset'}</i>
 							{:else if teamsResolved(match) && !isLocked(match)}

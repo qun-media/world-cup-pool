@@ -309,6 +309,10 @@
 		display: grid;
 		gap: 0.75rem;
 	}
+	.flow-grid :global(.card + .card),
+	.facts-grid :global(.card + .card) {
+		margin-top: 0;
+	}
 	.step-mark {
 		display: flex;
 		align-items: center;

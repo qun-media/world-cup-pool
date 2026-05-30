@@ -231,7 +231,8 @@
 			day: '2-digit',
 			month: 'short',
 			hour: '2-digit',
-			minute: '2-digit'
+			minute: '2-digit',
+			hourCycle: 'h23'
 		}).format(date);
 	}
 </script>
@@ -366,7 +367,7 @@
 		</p>
 	</section>
 
-	{#if invite && invite !== 'GLOBAL'}
+	{#if invite}
 		<LeagueChatCard leagueId={league.id} />
 	{/if}
 

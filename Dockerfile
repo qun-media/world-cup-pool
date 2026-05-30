@@ -1,8 +1,12 @@
+# syntax=docker/dockerfile:1.7
 # ---- Stage 1: build the SvelteKit SPA ----
 FROM node:22-alpine AS frontend
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json* ./
-RUN npm ci 2>/dev/null || npm install
+# Mount the npm cache so re-downloads are skipped across builds.
+RUN --mount=type=cache,target=/root/.npm,sharing=locked \
+	(npm ci --prefer-offline --no-audit --no-fund 2>/dev/null \
+	 || npm install --prefer-offline --no-audit --no-fund)
 COPY frontend/ ./
 # adapter-static writes the SPA into /app/internal/web/build
 RUN npm run build
@@ -10,12 +14,25 @@ RUN npm run build
 # ---- Stage 2: build the Go binary with the SPA embedded ----
 FROM golang:1.26-alpine AS backend
 WORKDIR /app
+ENV CGO_ENABLED=0 GOFLAGS=-buildvcs=false
 COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
+RUN --mount=type=cache,target=/go/pkg/mod,sharing=locked \
+	go mod download
+
+# Copy only what the Go build actually needs so frontend churn doesn't
+# bust the Go layer cache.
+COPY main.go ./
+COPY internal/ ./internal/
+COPY migrations/ ./migrations/
+
 # Replace the committed placeholder with the freshly built SPA before embed.
 COPY --from=frontend /app/internal/web/build ./internal/web/build
-RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /wm-pickems .
+
+# Mount both the module cache and the build cache so subsequent builds are
+# incremental — first build still does full work, repeat builds reuse cache.
+RUN --mount=type=cache,target=/go/pkg/mod,sharing=locked \
+	--mount=type=cache,target=/root/.cache/go-build,sharing=locked \
+	go build -trimpath -ldflags="-s -w" -o /wm-pickems .
 
 # ---- Stage 3: minimal runtime ----
 FROM alpine:3.20

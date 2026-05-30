@@ -59,6 +59,8 @@
 	.odds-row {
 		display: flex;
 		align-items: center;
+		justify-content: center;
+		flex-wrap: wrap;
 		gap: 0.35rem;
 		margin: 0.45rem 0 0.2rem;
 	}
@@ -108,5 +110,6 @@
 		color: var(--muted);
 		margin-bottom: 0.15rem;
 		opacity: 0.7;
+		text-align: center;
 	}
 </style>

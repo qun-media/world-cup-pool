@@ -114,9 +114,6 @@ func requireLeagueMember(app core.App, leagueID, userID string) (*core.Record, e
 	if err != nil {
 		return nil, apis.NewNotFoundError("league not found", nil)
 	}
-	if league.GetString("inviteCode") == leagues.GlobalInviteCode {
-		return nil, apis.NewForbiddenError("global league has no chat", nil)
-	}
 	if _, err := app.FindFirstRecordByFilter("league_members",
 		"league = {:l} && user = {:u}",
 		map[string]any{"l": leagueID, "u": userID}); err != nil {

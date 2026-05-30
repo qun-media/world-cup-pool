@@ -93,8 +93,8 @@
 		if (!Number.isFinite(then)) return '';
 		if (diff < 60_000) return copy.now;
 		if (diff < 3_600_000) return `${Math.floor(diff / 60_000)} min`;
-		if (diff < 86_400_000) return new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(then);
-		return new Intl.DateTimeFormat(locale, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(then);
+		if (diff < 86_400_000) return new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(then);
+		return new Intl.DateTimeFormat(locale, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(then);
 	}
 
 	async function send() {
