@@ -32,7 +32,7 @@
   { "fifaCode": "GHA", "ranking": 31 },
   { "fifaCode": "ALG", "ranking": 32 },
   { "fifaCode": "AUS", "ranking": 33 },
-  { "fifaCode": "SAU", "ranking": 34 },
+  { "fifaCode": "KSA", "ranking": 34 },
   { "fifaCode": "CIV", "ranking": 35 },
   { "fifaCode": "NGA", "ranking": 36 },
   { "fifaCode": "COD", "ranking": 37 },
@@ -45,8 +45,10 @@
   { "fifaCode": "BIH", "ranking": 44 },
   { "fifaCode": "VEN", "ranking": 45 },
   { "fifaCode": "CPV", "ranking": 46 },
-  { "fifaCode": "HTI", "ranking": 47 },
+  { "fifaCode": "HAI", "ranking": 47 },
   { "fifaCode": "CUW", "ranking": 48 },
   { "fifaCode": "SCO", "ranking": 49 },
-  { "fifaCode": "TUN", "ranking": 50 }
+  { "fifaCode": "TUN", "ranking": 50 },
+  { "fifaCode": "CZE", "ranking": 41 },
+  { "fifaCode": "RSA", "ranking": 60 }
 ]
