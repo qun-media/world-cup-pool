@@ -1,7 +1,6 @@
 <script lang="ts">
 	import DeadlineCountdown from '$lib/components/DeadlineCountdown.svelte';
 	import { forecastStore as fs, koKey, type KOMatch } from '$lib/forecast.svelte';
-	import { tipsStore } from '$lib/tips.svelte';
 	import Flag from '$lib/components/Flag.svelte';
 	import { vibrate } from '$lib/haptics';
 	import { flip } from 'svelte/animate';
@@ -27,27 +26,6 @@
 	$effect(() => {
 		if (!fs.loaded) fs.load().catch((e) => (err = e?.message ?? (isEnglish ? 'Load failed' : 'Lasting feila')));
 	});
-
-	$effect(() => {
-		if (!tipsStore.loaded) tipsStore.load().catch(() => {});
-	});
-
-	function teamGroupWinPct(teamId: string): string {
-		const matches = tipsStore.matches.filter(
-			(m) => m.stage === 'group' && (m.homeTeam === teamId || m.awayTeam === teamId)
-		);
-		if (!matches.length || !Object.keys(tipsStore.odds).length) return '';
-		const probs = matches
-			.map((m) => {
-				const o = tipsStore.odds[m.id];
-				if (!o) return null;
-				return m.homeTeam === teamId ? o.pHome : o.pAway;
-			})
-			.filter((p): p is number => p !== null);
-		if (!probs.length) return '';
-		const avg = probs.reduce((s, p) => s + p, 0) / probs.length;
-		return Math.round(avg * 100) + '%';
-	}
 
 	// Debounced autosave. The Forecast is a living prediction edited until
 	// lock, so changes persist automatically ~1s after the last edit.
@@ -183,7 +161,7 @@
 								: scoredAdv
 									? 'half'
 									: 'miss'}
-					{@const wPct = teamGroupWinPct(id)}
+					{@const rank = fs.team(id)?.fifaRanking}
 					<div
 						class="trow"
 						class:rwin={state === 'ok'}
@@ -194,7 +172,7 @@
 						<span class="pos">{i + 1}</span>
 						<Flag iso2={fs.team(id)?.iso2 ?? ''} code={fs.team(id)?.fifaCode ?? ''} />
 						<span class="nm">{tname(id)}</span>
-						{#if wPct}<span class="wpct">{wPct}</span>{/if}
+						{#if rank}<span class="wpct">#{rank}</span>{/if}
 						<span class="tag">
 							{#if state === 'ok'}<span class="ind ok"><Check size={15} /></span>
 							{:else if state === 'half'}
