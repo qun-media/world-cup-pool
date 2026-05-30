@@ -7,6 +7,7 @@ export interface Team {
 	name: string;
 	iso2: string;
 	fifaCode: string;
+	fifaRanking: number;
 }
 
 export interface Match {
@@ -109,7 +110,8 @@ class TipsStore {
 				id: t.id,
 				name: t.name,
 				iso2: t.iso2,
-				fifaCode: t.fifaCode
+				fifaCode: t.fifaCode,
+				fifaRanking: t.fifaRanking ?? 0
 			};
 		this.teams = tmap;
 		this.matches = matches as unknown as Match[];

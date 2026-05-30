@@ -32,7 +32,8 @@
 	let pts = $derived(tipsStore.scores[match.id]);
 	let matchOdds = $derived(tipsStore.odds[match.id]);
 	let showDecimal = $state(false);
-	let showOdds = $derived(!locked && !played && !live && !!matchOdds);
+	let showOdds = $derived(!locked && !played && !live && !!matchOdds && tipsStore.oddsSource === 'odds_api');
+	let showRankings = $derived(!locked && !played && !live && !!(home?.fifaRanking) && !!(away?.fifaRanking));
 	let canEdit = $derived(!locked && resolved);
 	let open = $state(false);
 	let bodyVisible = $derived(open || canEdit);
@@ -274,6 +275,11 @@
 			<span class="t right">
 				<span class="tn">{A.name}</span> <Flag iso2={A.iso2} code={A.code} />
 			</span>
+			{#if showRankings}
+				<span class="rank muted">#{home!.fifaRanking}</span>
+				<span></span>
+				<span class="rank muted right">#{away!.fifaRanking}</span>
+			{/if}
 		</div>
 		{#if showOdds}
 			<OddsBadge odds={matchOdds} source={tipsStore.oddsSource} bind:showDecimal />
@@ -637,6 +643,15 @@
 	}
 	.score {
 		padding: 0 0.4rem;
+	}
+	.rank {
+		font-size: 0.72rem;
+		font-family: var(--font-mono);
+		font-weight: 600;
+		margin-top: 0.1rem;
+	}
+	.rank.right {
+		text-align: right;
 	}
 	.meta {
 		display: flex;
