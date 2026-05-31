@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 )
 
@@ -357,6 +358,17 @@ func ApplyFIFARankings(app core.App) error {
 		}
 	}
 	return nil
+}
+
+// Register wires admin-only seed management endpoints.
+func Register(app core.App, se *core.ServeEvent) {
+	// Re-apply FIFA rankings from the embedded JSON to the teams collection.
+	se.Router.POST("/api/admin/rankings/refresh", func(e *core.RequestEvent) error {
+		if err := ApplyFIFARankings(app); err != nil {
+			return e.JSON(500, map[string]string{"error": err.Error()})
+		}
+		return e.JSON(200, map[string]string{"status": "ok"})
+	}).Bind(apis.RequireSuperuserAuth())
 }
 
 // DefaultScoringConfig — the agreed rules; tunable without code changes

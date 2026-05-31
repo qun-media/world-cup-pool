@@ -50,11 +50,11 @@
 </button>
 
 <div class="stickyhead" use:collapseOnScroll>
-	<p class="kicker">{isEnglish ? 'World Cup tips' : 'VM-tips'}</p>
+	<p class="kicker">{isEnglish ? 'Forecast' : 'VM-tips'}</p>
 	<div class="sh-expand">
 		<div class="sh-inner">
 			<h1>{fs.viewName || '…'}</h1>
-			<p class="muted desc">{isEnglish ? "Read-only - a friend's World Cup tips." : 'Skriveverna - VM-tipset til ein ven.'}</p>
+			<p class="muted desc">{isEnglish ? "Read-only - a friend's Forecast." : 'Skriveverna - VM-tipset til ein ven.'}</p>
 		</div>
 	</div>
 	{#if fs.loaded}

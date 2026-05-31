@@ -157,7 +157,7 @@
 			<h3>{isEnglish ? 'Jump to' : 'Hopp til'}</h3>
 		<p class="muted small">
 				{isEnglish
-					? 'Matches before this time are simulated (finished, or live if in the middle of the match); later matches are reset. Locks, friends\' match tips, and the World Cup tip deadline follow this clock.'
+					? 'Matches before this time are simulated (finished, or live if in the middle of the match); later matches are reset. Locks, friends\' match tips, and the Forecast deadline follow this clock.'
 					: 'Kampar før dette tidspunktet blir simulerte (ferdige, eller live viss dei er midt i kampen); seinare kampar blir nullstilte. Låsing, venetips og VM-tipsfristen følgjer denne klokka.'}
 		</p>
 		<div class="field">
@@ -184,7 +184,7 @@
 		<h3>{isEnglish ? 'Generate bot players' : 'Lag bot-spelarar'}</h3>
 		<p class="muted small">
 			{isEnglish
-				? 'Each bot gets a fully random World Cup tip and a match tip for every match, and joins the selected league (or all your private leagues) - a live leaderboard race.'
+				? 'Each bot gets a fully random Forecast and a match tip for every match, and joins the selected league (or all your private leagues) - a live leaderboard race.'
 				: 'Kvar bot får eit heilt tilfeldig VM-tips og kamptips for kvar kamp, og blir med i vald liga (eller alle private ligaene dine) - eit live tabelløp.'}
 		</p>
 		<div class="field">

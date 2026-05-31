@@ -251,7 +251,7 @@
 		<div class="tabs">
 			<button class:active={tab === 'total'} onclick={() => (tab = 'total')}>{isEnglish ? 'Total' : 'Totalt'}</button>
 			<button class:active={tab === 'tipsPoints'} onclick={() => (tab = 'tipsPoints')}>{isEnglish ? 'Match tips' : 'Kamptips'}</button>
-			<button class:active={tab === 'forecastPoints'} onclick={() => (tab = 'forecastPoints')}>{isEnglish ? 'World Cup tips' : 'VM-tips'}</button>
+			<button class:active={tab === 'forecastPoints'} onclick={() => (tab = 'forecastPoints')}>{isEnglish ? 'Forecast' : 'VM-tips'}</button>
 		</div>
 
 		<table class="lb">
@@ -270,7 +270,7 @@
 						<th class="num ext" title={isEnglish ? 'Correct winner predicted' : 'Rett vinnar tippa'}>{isEnglish ? 'Win' : 'Vinn'}</th>
 					{:else}
 						<th class="num ext" title={isEnglish ? 'Matches tipped' : 'Kampar tippa'}>Tips</th>
-						<th class="num ext" title={isEnglish ? 'World Cup tip points' : 'VM-tipspoeng'}>{isEnglish ? 'WC' : 'VM'}</th>
+						<th class="num ext" title={isEnglish ? 'Forecast points' : 'VM-tipspoeng'}>{isEnglish ? 'WC' : 'VM'}</th>
 						<th class="num ext" title={isEnglish ? 'Exact scores (tiebreaker 1)' : 'Eksakte resultat (tie-break 1)'}>{isEnglish ? 'Exact' : 'Eksakt'}</th>
 						<th class="num ext" title={isEnglish ? 'Correct winners (tiebreaker 2)' : 'Rette vinnarar (tie-break 2)'}>{isEnglish ? 'Win' : 'Vinn'}</th>
 						<th class="num ext" title={isEnglish ? 'Goal-difference error (tiebreaker 3, lower is better)' : 'Målforskjell-feil (tie-break 3, lågare er betre)'}>GD&Delta;</th>
@@ -304,7 +304,7 @@
 									<a
 										class="fclink"
 										href={`/forecast/${r.userId}`}
-										title={isEnglish ? `View ${r.name}'s World Cup tips` : `Sjå VM-tipset til ${r.name}`}
+										title={isEnglish ? `View ${r.name}'s Forecast` : `Sjå VM-tipset til ${r.name}`}
 										onclick={(e) => e.stopPropagation()}
 									>
 										<Telescope size={15} />
@@ -349,7 +349,7 @@
 									<div class="stats">
 										<span><i>{isEnglish ? 'Matches tipped' : 'Kampar tippa'}</i><b>{r.predicted}</b></span>
 										<span><i>{isEnglish ? 'Match tip points' : 'Kamptipspoeng'}</i><b>{r.tipsPoints}</b></span>
-										<span><i>{isEnglish ? 'World Cup tip points' : 'VM-tipspoeng'}</i><b>{r.forecastPoints}</b></span>
+										<span><i>{isEnglish ? 'Forecast points' : 'VM-tipspoeng'}</i><b>{r.forecastPoints}</b></span>
 										<span><i>{isEnglish ? 'Exact scores' : 'Eksakte resultat'}</i><b>{r.exactScores}</b></span>
 										<span><i>{isEnglish ? 'Correct winners' : 'Rette vinnarar'}</i><b>{r.correctWinners}</b></span>
 										<span><i>{isEnglish ? 'Goal-difference error' : 'Målforskjell-feil'}</i><b>{r.gdDeviation}</b></span>
@@ -546,7 +546,7 @@
 					: 'Sluttspelkampar kan ikkje ende uavgjort - resultatpoenga går til laget som går vidare. Blir ein sluttspelkamp avgjord etter ekstraomgangar, blir stillinga etter ekstraomgangar brukt til poeng.'}
 			</p>
 
-			<h4>{isEnglish ? 'World Cup tips for the tournament' : 'VM-tips for turneringa'}</h4>
+			<h4>{isEnglish ? 'Forecast for the tournament' : 'VM-tips for turneringa'}</h4>
 			<ul class="leg">
 				<li><span>{isEnglish ? 'Each team in the correct group position' : 'Kvart lag på rett gruppeplassering'}</span><b>{cfg.forecast.groupPosition} p</b></li>
 				<li><span>{isEnglish ? 'The full group in the correct order (bonus)' : 'Heile gruppa i rett rekkjefølgje (bonus)'}</span><b>+{cfg.forecast.perfectGroupBonus} p</b></li>

@@ -48,7 +48,8 @@
 	let isPublic = $derived(
 		(path === '/' && !auth.isAuthed) ||
 		path.startsWith('/join') ||
-			path.startsWith('/confirm-password-reset/')
+		path.startsWith('/confirm-password-reset/') ||
+		path.startsWith('/admin')
 	);
 	// No app chrome on the standalone auth / invite / reset screens.
 	let chrome = $derived(auth.isAuthed && !isAuthPage && !isPublic);

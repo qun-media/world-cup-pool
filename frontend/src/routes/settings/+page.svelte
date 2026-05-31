@@ -321,7 +321,7 @@
 		<h3>{isEnglish ? 'Delete account' : 'Slett konto'}</h3>
 		<p class="muted small danger-copy">
 			{isEnglish
-				? 'This permanently deletes your account. Tips, World Cup tips, memberships, chat activity and private leagues you own will also be removed.'
+				? 'This permanently deletes your account. Tips, Forecast, memberships, chat activity and private leagues you own will also be removed.'
 				: 'Dette slettar kontoen din permanent. Kamptips, VM-tips, medlemskap, chataktivitet og private ligaer du eig, blir også fjerna.'}
 		</p>
 		<div class="field">

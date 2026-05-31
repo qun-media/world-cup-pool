@@ -507,13 +507,13 @@
 				tone: 'forecast',
 				kicker: isEnglish ? 'Next action' : 'Neste handling',
 				title: isEnglish
-					? 'The World Cup tip must be submitted before kickoff'
+					? 'The Forecast must be submitted before kickoff'
 					: 'VM-tipset må leverast før avspark',
 				body: isEnglish
 					? 'Set groups, best thirds, and knockout before the tournament starts.'
 					: 'Set grupper, beste trearar og sluttspel før turneringa startar.',
 				href: '/forecast',
-				label: isEnglish ? 'Open World Cup tips' : 'Opne VM-tips',
+				label: isEnglish ? 'Open Forecast' : 'Opne VM-tips',
 				deadline: fs.tournamentStart,
 				deadlineLabel: isEnglish ? 'Locks' : 'Låsast'
 			};
@@ -612,68 +612,68 @@
 		const champion = championId ? teamDisplayName(teamAny(championId), isEnglish ? 'Unknown' : 'Ukjent') : '';
 		if (!fs.loaded) {
 			return {
-				kicker: isEnglish ? 'World Cup tip' : 'VM-tips',
-				title: isEnglish ? 'Loading your World Cup tip' : 'Lastar VM-tipset ditt',
+				kicker: isEnglish ? 'Forecast' : 'VM-tips',
+				title: isEnglish ? 'Loading your Forecast' : 'Lastar VM-tipset ditt',
 				body: isEnglish
 					? 'We are checking groups, knockout, and podium.'
 					: 'Vi sjekkar grupper, sluttspel og pall.',
-				label: isEnglish ? 'Open World Cup tips' : 'Opne VM-tips',
+				label: isEnglish ? 'Open Forecast' : 'Opne VM-tips',
 				tone: 'loading'
 			};
 		}
 		if (vmTipsMissing) {
 			return {
-				kicker: isEnglish ? 'World Cup tip' : 'VM-tips',
+				kicker: isEnglish ? 'Forecast' : 'VM-tips',
 				title: isEnglish
-					? 'The World Cup tip must be submitted before kickoff'
+					? 'The Forecast must be submitted before kickoff'
 					: 'VM-tipset må leverast før avspark',
 				body: isEnglish
 					? 'Enter groups, best thirds, and knockout.'
 					: 'Fyll ut grupper, beste trearar og sluttspel.',
-				label: isEnglish ? 'Submit World Cup tip' : 'Lever VM-tips',
+				label: isEnglish ? 'Submit Forecast' : 'Lever VM-tips',
 				tone: 'urgent'
 			};
 		}
 		if (tournamentFinished) {
 			return {
-				kicker: isEnglish ? 'World Cup tip' : 'VM-tips',
+				kicker: isEnglish ? 'Forecast' : 'VM-tips',
 				title: forecastPointsText(activeLeagueRow?.forecastPoints ?? 0),
 				body: champion
 					? isEnglish ? `You had ${champion} as winner.` : `Du hadde ${champion} som vinnar.`
 					: isEnglish ? 'The tournament is finished.' : 'Turneringa er ferdig.',
-				label: isEnglish ? 'View World Cup tips' : 'Sjå VM-tips',
+				label: isEnglish ? 'View Forecast' : 'Sjå VM-tips',
 				tone: 'done'
 			};
 		}
 		if (!tournamentStarted) {
 			return {
-				kicker: isEnglish ? 'World Cup tip' : 'VM-tips',
+				kicker: isEnglish ? 'Forecast' : 'VM-tips',
 				title: champion
 					? isEnglish ? `${champion} is your winner` : `${champion} er vinnaren din`
-					: isEnglish ? 'Your World Cup tip is ready' : 'VM-tipset ditt er klart',
+					: isEnglish ? 'Your Forecast is ready' : 'VM-tipset ditt er klart',
 				body: isEnglish
 					? 'Your podium is locked in when the tournament starts.'
 					: 'Pallen din blir låst når turneringa startar.',
-				label: isEnglish ? 'View World Cup tips' : 'Sjå VM-tips',
+				label: isEnglish ? 'View Forecast' : 'Sjå VM-tips',
 				tone: 'ready'
 			};
 		}
 		const alive = teamStillAlive(championId);
 		return {
 			kicker: fs.groupStageDone
-				? isEnglish ? 'World Cup tip · knockout' : 'VM-tips · sluttspel'
-				: isEnglish ? 'World Cup tip · group stage' : 'VM-tips · gruppespel',
+				? isEnglish ? 'Forecast · knockout' : 'VM-tips · sluttspel'
+				: isEnglish ? 'Forecast · group stage' : 'VM-tips · gruppespel',
 			title: champion
 				? alive
 					? isEnglish ? 'Your winner is still alive' : 'Vinnaren din er framleis med'
 					: isEnglish ? 'Your winner is out' : 'Vinnaren din er ute'
-				: isEnglish ? 'Your World Cup tip is live' : 'VM-tipset ditt er i gang',
+				: isEnglish ? 'Your Forecast is live' : 'VM-tipset ditt er i gang',
 			body: champion
 				? `${champion}${activeLeagueRow ? ` · ${forecastPointsText(activeLeagueRow.forecastPoints)}` : ''}`
 				: isEnglish
 					? 'Follow groups and knockout as results come in.'
 					: 'Følg grupper og sluttspel etter kvart som resultata kjem.',
-			label: isEnglish ? 'View World Cup tips' : 'Sjå VM-tips',
+			label: isEnglish ? 'View Forecast' : 'Sjå VM-tips',
 			tone: alive ? 'ready' : 'out'
 		};
 	});

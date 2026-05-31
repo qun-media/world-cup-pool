@@ -22,7 +22,7 @@
 	let flow = $derived.by(() => [
 		{
 			icon: Telescope,
-			title: isEnglish ? 'World Cup tips before kickoff' : 'VM-tips før avspark',
+			title: isEnglish ? 'Forecast before kickoff' : 'VM-tips før avspark',
 			text: isEnglish
 				? 'Set the group order, best thirds, and the full knockout bracket before the first whistle.'
 				: 'Set grupperekkjefølgje, beste trearar og heile sluttspelstreet før første avspark.'
@@ -102,7 +102,7 @@
 		</div>
 		<div class="scoreboard" aria-label={isEnglish ? 'Quick overview' : 'Kort oversikt'}>
 			<div><strong>104</strong><span>{isEnglish ? 'matches' : 'kampar'}</span></div>
-			<div><strong>1</strong><span>{isEnglish ? 'World Cup tip' : 'VM-tips'}</span></div>
+			<div><strong>1</strong><span>{isEnglish ? 'Forecast' : 'VM-tips'}</span></div>
 			<div><strong>6</strong><span>{isEnglish ? 'max per game' : 'maks per kamp'}</span></div>
 		</div>
 	</section>
@@ -172,9 +172,9 @@
 			<article class="card score-panel forecast-panel">
 				<div class="panel-title">
 					<Telescope size={20} />
-					<h3>{isEnglish ? 'World Cup tips' : 'VM-tips'}</h3>
+					<h3>{isEnglish ? 'Forecast' : 'VM-tips'}</h3>
 				</div>
-				<p>{isEnglish ? 'The World Cup tip locks at the first match and scores as groups and rounds are decided.' : 'VM-tipset låser seg ved første kamp og gir poeng etter kvart som grupper og rundar blir avgjorde.'}</p>
+				<p>{isEnglish ? 'The Forecast locks at the first match and scores as groups and rounds are decided.' : 'VM-tipset låser seg ved første kamp og gir poeng etter kvart som grupper og rundar blir avgjorde.'}</p>
 				<div class="forecast-grid">
 					{#each forecastPoints as point}
 						<div>

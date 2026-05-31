@@ -4,6 +4,7 @@
 package main
 
 import (
+	"context"
 	"io/fs"
 	"log"
 	"net/http"
@@ -45,6 +46,9 @@ func main() {
 		if err := seed.Run(e.App); err != nil {
 			return err
 		}
+		if err := seed.ApplyFIFARankings(e.App); err != nil {
+			log.Printf("[boot] rankings refresh: %v", err)
+		}
 
 		// If PB_ADMIN_EMAIL and PB_ADMIN_PASSWORD are provided in ENV, upsert the superuser
 		if adminEmail := os.Getenv("PB_ADMIN_EMAIL"); adminEmail != "" {
@@ -75,6 +79,7 @@ func main() {
 			}
 		}
 
+		seed.Register(e.App, e)
 		account.Register(e.App, e)
 		account.RegisterStats(e.App, e)
 		oauth.Register(e.App)
@@ -86,6 +91,15 @@ func main() {
 		scoring.Register(e.App, e)
 		chat.Register(e.App, e)
 		dev.Register(e.App, e)
+
+		// Daily backup at 00:00 PDT (07:00 UTC). Stored in pb_data/backups/.
+		app.Cron().MustAdd("daily-backup", "0 7 * * *", func() {
+			if err := app.CreateBackup(context.Background(), ""); err != nil {
+				log.Printf("[backup] daily backup failed: %v", err)
+			} else {
+				log.Printf("[backup] daily backup created")
+			}
+		})
 
 		// Serve the web manifest with the correct MIME so it installs as a
 		// proper PWA (apis.Static would send text/plain for .webmanifest).

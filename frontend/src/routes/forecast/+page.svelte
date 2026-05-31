@@ -99,10 +99,10 @@
 	<p class="kicker">{isEnglish ? 'Whole tournament' : 'Heile turneringa'}</p>
 	<div class="sh-expand">
 		<div class="sh-inner">
-			<h1>{isEnglish ? 'World Cup tips' : 'VM-tips'}</h1>
+			<h1>{isEnglish ? 'Forecast' : 'VM-tips'}</h1>
 			<p class="muted desc">
 				{isEnglish
-					? 'Your World Cup tip for groups, best thirds, and the road to the final.'
+					? 'Your Forecast for groups, best thirds, and the road to the final.'
 					: 'VM-tipset ditt for grupper, beste trearar og vegen til finalen.'}
 				{#if fs.locked}<b>{isEnglish ? 'Locked.' : 'Låst.'}</b
 						>{:else}{isEnglish ? 'Locks at kickoff.' : 'Låsast ved avspark.'}{/if}
@@ -131,7 +131,7 @@
 	<p class="muted">{isEnglish ? 'Loading…' : 'Lastar…'}</p>
 {:else}
 	{#if fs.locked}
-		<div class="card lockbar"><Lock size={16} /> {isEnglish ? 'The tournament has started - the World Cup tip is final.' : 'Turneringa har starta - VM-tipset er endeleg.'}</div>
+		<div class="card lockbar"><Lock size={16} /> {isEnglish ? 'The tournament has started - the Forecast is final.' : 'Turneringa har starta - VM-tipset er endeleg.'}</div>
 	{/if}
 
 	{#if section === 'groups'}

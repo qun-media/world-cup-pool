@@ -71,7 +71,7 @@
 	<div class="landing-shell">
 		<section class="landing-hero">
 			<div class="hero-copy">
-				<Logo variant="hero" tagline={isEnglish ? 'World Cup tips with friends' : 'Kamptips og VM-tips med vener'} />
+				<Logo variant="hero" tagline={isEnglish ? 'Forecast with friends' : 'Kamptips og VM-tips med vener'} />
 				<p class="kicker">VM 2026</p>
 				<h1 id="landing-title" class="landing-headline">
 					<span class="landing-verb">{landingVerb}</span>

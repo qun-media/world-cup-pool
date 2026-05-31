@@ -329,7 +329,7 @@ export const strings: Record<
 		nav: {
 			home: 'Home',
 			matchTips: 'Match Tips',
-			worldCupTips: 'World Cup Tips',
+			worldCupTips: 'Forecast',
 			bracket: 'Bracket',
 			leagues: 'Leagues'
 		},
@@ -345,7 +345,7 @@ export const strings: Record<
 			languageAria: 'Switch to Nynorsk'
 		},
 		auth: {
-			tagline: 'Match tips and World Cup tips in one league.',
+			tagline: 'Match tips and Forecast in one league.',
 			subtitle: 'Build your crew, pick the games, and follow the World Cup drama from kickoff.',
 			emailLabel: 'Email',
 			passwordLabel: 'Password',
@@ -361,7 +361,7 @@ export const strings: Record<
 		},
 		register: {
 			title: 'Create account',
-			subtitle: 'Join the World Cup tipping competition.',
+			subtitle: 'Join the Forecast competition.',
 			nameLabel: 'Display name',
 			passwordHint: 'Password must be at least 8 characters.',
 			create: 'Create account',
@@ -425,7 +425,7 @@ export const strings: Record<
 			leaguesBody: 'Create one or join with a code.',
 			matchTipsTitle: 'Match tips',
 			matchTipsBody: 'Submit before kickoff.',
-			worldCupTipsTitle: 'World Cup tips',
+			worldCupTipsTitle: 'Forecast',
 			worldCupTipsBody: 'Pick the bracket and winner.',
 			primaryCta: 'Open leagues',
 			secondaryCta: 'See match tips',
