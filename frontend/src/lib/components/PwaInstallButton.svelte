@@ -7,10 +7,10 @@
 		type="button"
 		class="btn install"
 		class:outlined={!pwa.dismissed}
-		aria-label="Installer WC Pool"
+		aria-label="Install WC Pool"
 		onclick={() => pwa.install()}
 	>
-		Installer
+		App
 	</button>
 {/if}
 
