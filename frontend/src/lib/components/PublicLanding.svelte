@@ -1,23 +1,17 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { auth } from '$lib/auth.svelte';
 	import { language } from '$lib/language.svelte';
 	import Flag from '$lib/components/Flag.svelte';
 	import Logo from '$lib/components/Logo.svelte';
 	import { fly } from 'svelte/transition';
 	import {
 		ArrowRight,
-		CheckCircle2,
 		Clock,
 		MessageCircle,
 		ShieldCheck,
 		Trophy,
-		Users,
-		Volleyball
+		Users
 	} from '@lucide/svelte';
 
-	let busy = $state(false);
-	let error = $state('');
 	let targetIndex = $state(0);
 	const isEnglish = $derived(language.isEnglish);
 	const landingTargets = $derived(
@@ -43,18 +37,6 @@
 		return () => clearInterval(timer);
 	});
 
-	async function google() {
-		error = '';
-		busy = true;
-		try {
-			await auth.loginGoogle();
-			await goto('/');
-		} catch (e: unknown) {
-			error = (e as { message?: string })?.message ?? (isEnglish ? 'Google sign-in failed.' : 'Google-innlogging feila.');
-		} finally {
-			busy = false;
-		}
-	}
 </script>
 
 <svelte:head>
@@ -72,7 +54,6 @@
 		<section class="landing-hero">
 			<div class="hero-copy">
 				<Logo variant="hero" tagline={isEnglish ? 'Forecast with friends' : 'Kamptips og VM-tips med vener'} />
-				<p class="kicker">VM 2026</p>
 				<h1 id="landing-title" class="landing-headline">
 					<span class="landing-verb">{landingVerb}</span>
 					<span class="landing-target-slot">
@@ -94,42 +75,11 @@
 				</p>
 
 				<div class="hero-actions" aria-label={isEnglish ? 'Sign in actions' : 'Innloggingsval'}>
-					<button type="button" class="google" disabled={busy} onclick={google}>
-						<svg class="gsi-logo" viewBox="0 0 48 48" aria-hidden="true">
-							<path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
-							<path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
-							<path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
-							<path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
-						</svg>
-						<span>{busy ? (isEnglish ? 'Opening Google...' : 'Opnar Google...') : (isEnglish ? 'Log in with Google' : 'Logg inn med Google')}</span>
-					</button>
 					<div class="secondary-actions">
 						<a class="btn secondary" href="/login">{isEnglish ? 'Use email' : 'Bruk e-post'}</a>
 						<a class="btn ghost" href="/register">{isEnglish ? 'Create account' : 'Opprett konto'}</a>
 					</div>
-					{#if error}<p class="error">{error}</p>{/if}
 				</div>
-			</div>
-
-			<div class="hero-board card" aria-label={isEnglish ? 'App preview' : 'Appvising'}>
-				<div class="board-top">
-					<span class="live"><Volleyball size={15} /> {isEnglish ? 'Next deadline' : 'Neste frist'}</span>
-					<span class="digits">21:00</span>
-				</div>
-				<div class="match-row">
-					<span><Flag iso2="br" code="BRA" size={22} /> Brasil</span>
-					<strong class="digits">2-1</strong>
-					<span class="right">Noreg <Flag iso2="no" code="NOR" size={22} /></span>
-				</div>
-				<div class="points-strip">
-					<span><b>3</b>{isEnglish ? 'outcome' : 'utfall'}</span>
-					<span><b>+1</b>{isEnglish ? 'exact' : 'eksakt'}</span>
-					<span><b>+1</b>{isEnglish ? 'goals' : 'mål'}</span>
-					<span><b>+1</b>{isEnglish ? 'diff' : 'diff'}</span>
-				</div>
-				<a class="preview-cta" href="/login">
-					<CheckCircle2 size={16} /> {isEnglish ? 'Submit tip' : 'Lever tips'}
-				</a>
 			</div>
 		</section>
 
@@ -145,10 +95,10 @@
 					<table>
 						<thead><tr><th>#</th><th>{isEnglish ? 'Team' : 'Lag'}</th><th>P</th><th>GD</th><th>Pts</th></tr></thead>
 						<tbody>
-							<tr><td>1</td><td><Flag iso2="no" code="NOR" size={17} /> Noreg</td><td>3</td><td>+4</td><td>7</td></tr>
-							<tr><td>2</td><td><Flag iso2="de" code="GER" size={17} /> Tyskland</td><td>3</td><td>+2</td><td>6</td></tr>
-							<tr><td>3</td><td><Flag iso2="mx" code="MEX" size={17} /> Mexico</td><td>3</td><td>0</td><td>4</td></tr>
-							<tr><td>4</td><td><Flag iso2="jp" code="JPN" size={17} /> Japan</td><td>3</td><td>-6</td><td>0</td></tr>
+							<tr><td>1</td><td><span class="team-cell"><Flag iso2="nl" code="NED" size={17} /> Netherlands</span></td><td>3</td><td>+5</td><td>7</td></tr>
+							<tr><td>2</td><td><span class="team-cell"><Flag iso2="se" code="SWE" size={17} /> Sweden</span></td><td>3</td><td>+1</td><td>5</td></tr>
+							<tr><td>3</td><td><span class="team-cell"><Flag iso2="jp" code="JPN" size={17} /> Japan</span></td><td>3</td><td>-2</td><td>3</td></tr>
+							<tr><td>4</td><td><span class="team-cell"><Flag iso2="tn" code="TUN" size={17} /> Tunisia</span></td><td>3</td><td>-4</td><td>1</td></tr>
 						</tbody>
 					</table>
 				</article>
@@ -274,32 +224,6 @@
 		min-width: 0;
 		margin-top: 0.35rem;
 	}
-	.google {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 12px;
-		width: 100%;
-		min-height: 48px;
-		padding: 0 16px;
-		background: #ffffff;
-		border: 1px solid #747775;
-		border-radius: 6px;
-		color: #1f1f1f;
-		font-family: 'Roboto', arial, sans-serif;
-		font-size: 15px;
-		font-weight: 600;
-		cursor: pointer;
-	}
-	.google:disabled {
-		opacity: 0.6;
-		cursor: wait;
-	}
-	.gsi-logo {
-		width: 20px;
-		height: 20px;
-		flex: none;
-	}
 	.secondary-actions {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
@@ -309,7 +233,6 @@
 		min-height: 44px;
 		padding: 0.75rem 0.8rem;
 	}
-	.hero-board,
 	.bottom-cta,
 	.mock-card {
 		background:
@@ -317,15 +240,6 @@
 			linear-gradient(180deg, rgba(13, 34, 40, 0.95), rgba(8, 21, 30, 0.98));
 		border-color: var(--border-strong);
 	}
-	.hero-board {
-		display: grid;
-		gap: 0.85rem;
-		padding: 1rem;
-		width: min(100%, 420px);
-		min-width: 0;
-	}
-	.board-top,
-	.match-row,
 	.mock-head,
 	.bottom-cta {
 		display: flex;
@@ -335,7 +249,6 @@
 		min-width: 0;
 		flex-wrap: wrap;
 	}
-	.live,
 	.chat-meta {
 		display: inline-flex;
 		align-items: center;
@@ -345,59 +258,6 @@
 		color: var(--accent);
 		font-size: 0.8rem;
 		font-weight: 800;
-	}
-	.match-row {
-		padding: 0.85rem;
-		border-radius: 14px;
-		background: rgba(255, 255, 255, 0.035);
-	}
-	.match-row span {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.45rem;
-		font-weight: 800;
-		min-width: 0;
-		flex-wrap: wrap;
-	}
-	.match-row .right {
-		justify-content: flex-end;
-	}
-	.match-row strong {
-		padding: 0.35rem 0.65rem;
-		border-radius: 999px;
-		background: #050a0f;
-		color: var(--gold);
-	}
-	.points-strip {
-		display: grid;
-		grid-template-columns: repeat(4, 1fr);
-		gap: 0.45rem;
-	}
-	.points-strip span {
-		display: grid;
-		gap: 0.1rem;
-		padding: 0.62rem;
-		border: 1px solid var(--border);
-		border-radius: 12px;
-		min-width: 0;
-		color: var(--muted);
-		font-size: 0.72rem;
-	}
-	.points-strip b {
-		color: var(--text);
-		font-family: var(--font-mono);
-		font-size: 1rem;
-	}
-	.preview-cta {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: 0.45rem;
-		min-height: 44px;
-		border-radius: 999px;
-		background: var(--accent-2);
-		color: #071019;
-		font-weight: 900;
 	}
 	.showcase {
 		display: grid;
@@ -419,6 +279,9 @@
 		display: grid;
 		gap: 0.85rem;
 		min-width: 0;
+	}
+	.mock-grid .card + .card {
+		margin-top: 0;
 	}
 	.mock-card {
 		display: grid;
@@ -443,6 +306,7 @@
 		border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 		text-align: right;
 		overflow-wrap: anywhere;
+		vertical-align: middle;
 	}
 	th:nth-child(2),
 	td:nth-child(2) {
@@ -467,10 +331,12 @@
 		width: 2.4rem;
 	}
 	td:nth-child(2) {
-		display: flex;
+		font-weight: 800;
+	}
+	.team-cell {
+		display: inline-flex;
 		align-items: center;
 		gap: 0.4rem;
-		font-weight: 800;
 	}
 	.score-total {
 		display: flex;
@@ -531,24 +397,12 @@
 	}
 
 	@media (min-width: 780px) {
-		.hero-board {
-			justify-self: stretch;
-		}
 		.mock-grid {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
 		}
 	}
 
 	@media (min-width: 980px) {
-		.landing-hero {
-			grid-template-columns: minmax(0, 1.08fr) minmax(340px, 0.72fr);
-			align-items: center;
-			min-height: min(760px, 86dvh);
-			gap: clamp(1.5rem, 3vw, 2.75rem);
-		}
-		.hero-board {
-			justify-self: end;
-		}
 		.mock-grid {
 			grid-template-columns: 1.05fr 0.85fr 1fr;
 		}
@@ -604,20 +458,13 @@
 			font-size: clamp(2rem, 11vw, 3.1rem);
 		}
 		.landing-headline,
-		.hero-board,
 		.bottom-cta > div {
 			max-width: 100%;
 			min-width: 0;
 		}
-		.secondary-actions,
-		.points-strip {
+		.secondary-actions {
 			grid-template-columns: 1fr;
 		}
-		.match-row {
-			grid-template-columns: 1fr;
-			align-items: stretch;
-		}
-		.match-row,
 		.bottom-cta {
 			flex-direction: column;
 		}

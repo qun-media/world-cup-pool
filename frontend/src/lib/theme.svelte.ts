@@ -19,9 +19,9 @@ function isThemeMode(value: string | null): value is ThemeMode {
 }
 
 function readStored(): ThemeMode {
-	if (!browser) return 'system';
+	if (!browser) return 'worldcup';
 	const v = localStorage.getItem(KEY);
-	return isThemeMode(v) ? v : 'system';
+	return isThemeMode(v) ? v : 'worldcup';
 }
 
 function systemPref(): 'light' | 'dark' {

@@ -17,12 +17,11 @@
 			(function () {
 				try {
 					var t = localStorage.getItem('theme');
-					if (t === 'light' || t === 'dark' || t === 'worldcup') {
-						document.documentElement.setAttribute('data-theme', t);
+					if (t === 'light' || t === 'dark' || t === 'system' || t === 'worldcup') {
+						document.documentElement.setAttribute('data-theme', t === 'system' ? ((!window.matchMedia || window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light') : t);
 					} else {
-						// No stored preference — detect system, default to dark if undetectable.
-						var dark = !window.matchMedia || window.matchMedia('(prefers-color-scheme: dark)').matches;
-						document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+						// No stored preference — default to worldcup theme.
+						document.documentElement.setAttribute('data-theme', 'worldcup');
 					}
 				} catch (e) {
 					document.documentElement.setAttribute('data-theme', 'dark');
