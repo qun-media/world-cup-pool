@@ -171,8 +171,10 @@
 					>
 						<span class="pos">{i + 1}</span>
 						<Flag iso2={fs.team(id)?.iso2 ?? ''} code={fs.team(id)?.fifaCode ?? ''} />
-						<span class="nm">{tname(id)}</span>
-						{#if rank}<span class="wpct">#{rank}</span>{/if}
+						<span class="nmwrap">
+							<span class="nm">{tname(id)}</span>
+							{#if rank}<span class="wpct">#{rank}</span>{/if}
+						</span>
 						<span class="tag">
 							{#if state === 'ok'}<span class="ind ok"><Check size={15} /></span>
 							{:else if state === 'half'}
@@ -353,8 +355,14 @@
 		font-weight: 800;
 		color: var(--muted);
 	}
-	.nm {
+	.nmwrap {
 		flex: 1;
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
+		overflow: hidden;
+	}
+	.nm {
 		font-weight: 600;
 		overflow: hidden;
 		text-overflow: ellipsis;
