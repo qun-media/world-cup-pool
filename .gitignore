@@ -49,6 +49,17 @@ pb_data_smoke/
 *.tmp
 *~
 
+# Claude Code
+.claude/settings.local.json
+.claude/todos/
+.claude/plans/
+
+# Editor / IDE (additional)
+.idea/
+*.swp
+*.swo
+Thumbs.db
+
 # Editor / OS
 .DS_Store
 .directory
