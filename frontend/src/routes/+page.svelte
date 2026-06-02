@@ -10,7 +10,6 @@
 	import { forecastStore as fs, koKey } from '$lib/forecast.svelte';
 	import { serverClock } from '$lib/serverclock.svelte';
 	import { teamDisplayName } from '$lib/teamNames';
-	import { language } from '$lib/language.svelte';
 	import { strings } from '$lib/strings';
 	import { matchStageLabel } from '$lib/stageLabels';
 	import Avatar from '$lib/components/Avatar.svelte';
@@ -55,9 +54,7 @@
 		href: string;
 	};
 
-	const isEnglish = $derived(language.isEnglish);
-	const locale = $derived(language.locale);
-	const introCopy = $derived(strings[language.resolved].introCard);
+	const introCopy = $derived(strings.introCard);
 	let introCardOpen = $state(false);
 	let introCardUser = $state('');
 
@@ -230,14 +227,14 @@
 			d.getFullYear() === today.getFullYear() &&
 			d.getMonth() === today.getMonth() &&
 			d.getDate() === today.getDate();
-		const time = d.toLocaleTimeString(locale, {
+		const time = d.toLocaleTimeString('en-US', {
 			hour: '2-digit',
 			minute: '2-digit',
 			hourCycle: 'h23'
 		});
-		if (sameDay) return `${isEnglish ? 'Today' : 'I dag'}, ${time}`;
+		if (sameDay) return `Today, ${time}`;
 		return (
-			d.toLocaleDateString(locale, {
+			d.toLocaleDateString('en-US', {
 				weekday: 'short',
 				day: 'numeric',
 				month: 'short'
@@ -249,11 +246,11 @@
 
 	function greeting() {
 		const h = new Date().getHours();
-		if (h < 6) return isEnglish ? 'Good night' : 'God natt';
-		if (h < 11) return isEnglish ? 'Good morning' : 'God morgon';
-		if (h < 17) return isEnglish ? 'Hi' : 'Hei';
-		if (h < 22) return isEnglish ? 'Good evening' : 'God kveld';
-		return isEnglish ? 'Good night' : 'God natt';
+		if (h < 6) return 'Good night';
+		if (h < 11) return 'Good morning';
+		if (h < 17) return 'Hi';
+		if (h < 22) return 'Good evening';
+		return 'Good night';
 	}
 
 	function firstName(name: string) {
@@ -276,25 +273,25 @@
 	}
 	function scoreText(m: Match) {
 		let s = `${m.ftHome}–${m.ftAway}`;
-		if (m.etHome || m.etAway) s = `${m.etHome}–${m.etAway} ${isEnglish ? 'aet' : 'e.eo.'}`;
-		if (m.penHome || m.penAway) s += ` (${m.penHome}–${m.penAway} ${isEnglish ? 'pens' : 'str'})`;
+		if (m.etHome || m.etAway) s = `${m.etHome}–${m.etAway} aet`;
+		if (m.penHome || m.penAway) s += ` (${m.penHome}–${m.penAway} pens)`;
 		return s;
 	}
 	function chatTimeLabel(iso: string) {
 		const then = new Date(iso).getTime();
 		if (!Number.isFinite(then)) return '';
 		const diff = now - then;
-		if (diff < 60_000) return isEnglish ? 'now' : 'no';
+		if (diff < 60_000) return 'now';
 		if (diff < 3_600_000) return `${Math.floor(diff / 60_000)} min`;
-		if (diff < 86_400_000) return new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(then);
-		return new Intl.DateTimeFormat(locale, { day: '2-digit', month: 'short' }).format(then);
+		if (diff < 86_400_000) return new Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(then);
+		return new Intl.DateTimeFormat('en-US', { day: '2-digit', month: 'short' }).format(then);
 	}
 	function chatPreview(text: string) {
 		return text.length > 82 ? `${text.slice(0, 79).trim()}…` : text;
 	}
 	function unreadLabel(count: number) {
 		if (count <= 0) return '';
-		return count === 1 ? (isEnglish ? 'New' : 'Ny') : `${Math.min(count, 99)} ${isEnglish ? 'new' : 'nye'}`;
+		return count === 1 ? 'New' : `${Math.min(count, 99)} new`;
 	}
 	function stageLabel(match: Match) {
 		return matchStageLabel(match);
@@ -376,30 +373,24 @@
 	}
 	function tipText(match: Match) {
 		const tip = tipsStore.tips[match.id];
-		if (!tip) return isEnglish ? 'Not tipped' : 'Ikkje tipset';
-		return `${isEnglish ? 'Your tip' : 'Ditt tips'}: ${tip.ftHome}-${tip.ftAway}`;
+		if (!tip) return 'Not tipped';
+		return `Your tip: ${tip.ftHome}-${tip.ftAway}`;
 	}
 	function matchTipsMissingText(count: number) {
-		return isEnglish
-			? `${count} match tip${count === 1 ? '' : 's'} missing`
-			: `${count} kamptips manglar`;
+		return `${count} match tip${count === 1 ? '' : 's'} missing`;
 	}
 	function lastMatchTitle(points: number) {
 		if (points === 6) {
-			return isEnglish
-				? `Perfect! ${shortPoints(points, true)} on the last match`
-				: `Perfekt! ${shortPoints(points, true)} på siste kamp`;
+			return `Perfect! ${shortPoints(points, true)} on the last match`;
 		}
-		return isEnglish
-			? `You got ${pointText(points)} on the last match`
-			: `Du fekk ${pointText(points)} på siste kamp`;
+		return `You got ${pointText(points)} on the last match`;
 	}
 	function forecastPointsText(points: number) {
-		return isEnglish ? `${points} forecast points` : `${points} VM-tips-poeng`;
+		return `${points} forecast points`;
 	}
 	function shortPoints(points: number, signed = false) {
 		const prefix = signed && points > 0 ? '+' : '';
-		return isEnglish ? `${prefix}${points} pts` : `${prefix}${points} p`;
+		return `${prefix}${points} pts`;
 	}
 	function medalForRank(rank: number) {
 		if (rank === 1) return '🥇';
@@ -408,17 +399,17 @@
 		return `#${rank}`;
 	}
 	function rankSummary(rank: number, members: number) {
-		return isEnglish ? `#${rank} of ${members}` : `#${rank} av ${members}`;
+		return `#${rank} of ${members}`;
 	}
 	function formatLeagueList(names: string[]) {
 		if (names.length === 0) return '';
 		if (names.length === 1) return names[0];
-		const conjunction = isEnglish ? 'and' : 'og';
+		const conjunction = 'and';
 		if (names.length === 2) return `${names[0]} ${conjunction} ${names[1]}`;
 		return `${names.slice(0, -1).join(', ')} ${conjunction} ${names.at(-1) ?? ''}`;
 	}
 	function pointText(points: number) {
-		if (points === 6) return isEnglish ? `Perfect! ${shortPoints(points, true)}` : `Perfekt! ${shortPoints(points, true)}`;
+		if (points === 6) return `Perfect! ${shortPoints(points, true)}`;
 		if (points > 0) return shortPoints(points, true);
 		return shortPoints(points);
 	}
@@ -428,25 +419,25 @@
 	}
 	function progressEventScoreText(event: LeagueProgressEvent) {
 		let s = `${event.ftHome}–${event.ftAway}`;
-		if (event.etHome || event.etAway) s = `${event.etHome}–${event.etAway} ${isEnglish ? 'aet' : 'e.eo.'}`;
-		if (event.penHome || event.penAway) s += ` (${event.penHome}–${event.penAway} ${isEnglish ? 'pens' : 'str'})`;
+		if (event.etHome || event.etAway) s = `${event.etHome}–${event.etAway} aet`;
+		if (event.penHome || event.penAway) s += ` (${event.penHome}–${event.penAway} pens)`;
 		return s;
 	}
 	function progressEventMeta(event: LeagueProgressEvent) {
 		const parts: string[] = [];
 		if (!event.tipped) {
-			parts.push(isEnglish ? 'No tip' : 'Ingen tips');
+			parts.push('No tip');
 		} else if (event.exact) {
-			parts.push(isEnglish ? 'Exact' : 'Eksakt');
+			parts.push('Exact');
 		} else {
 			if (event.correctWinner) {
-				parts.push(event.stage === 'group' ? (isEnglish ? 'Outcome' : 'Utfall') : isEnglish ? 'Through' : 'Vidare');
+				parts.push(event.stage === 'group' ? 'Outcome' : 'Through');
 			}
-			if (event.correctGoalDiff) parts.push(isEnglish ? 'Diff' : 'Diff');
-			if (event.correctTotalGoals) parts.push(isEnglish ? 'Goals' : 'Mål');
-			if (!parts.length) parts.push(isEnglish ? 'No hit' : 'Ingen treff');
+			if (event.correctGoalDiff) parts.push('Diff');
+			if (event.correctTotalGoals) parts.push('Goals');
+			if (!parts.length) parts.push('No hit');
 		}
-		parts.push(isEnglish ? `Total ${event.totalAfter} pts` : `Totalt ${event.totalAfter} p`);
+		parts.push(`Total ${event.totalAfter} pts`);
 		return parts.join(' · ');
 	}
 	function teamStillAlive(id: string) {
@@ -470,13 +461,11 @@
 		if (!tipsStore.loaded || !fs.loaded) {
 			return {
 				tone: 'loading',
-				kicker: isEnglish ? 'Right now' : 'Akkurat no',
-				title: isEnglish ? 'Checking your tips' : 'Sjekkar tipsa dine',
-				body: isEnglish
-					? 'Fetching match status, points, and league.'
-					: 'Hentar kampstatus, poeng og liga.',
+				kicker: 'Right now',
+				title: 'Checking your tips',
+				body: 'Fetching match status, points, and league.',
 				href: '/tips',
-				label: isEnglish ? 'Open match tips' : 'Opne kamptips'
+				label: 'Open match tips'
 			};
 		}
 		if (missingMatchTips.length > 0) {
@@ -484,94 +473,78 @@
 			const match = missingMatchTips[0];
 			return {
 				tone: 'urgent',
-				kicker: isEnglish ? 'Next action' : 'Neste handling',
+				kicker: 'Next action',
 				title: matchTipsMissingText(count),
 				body: count === 1
-					? isEnglish
-						? 'This tip must be submitted before kickoff.'
-						: 'Dette tipset må leverast før avspark.'
-					: isEnglish
-						? 'The remaining match tips must be submitted before kickoff.'
-						: 'Dei siste kamptipsa må leverast før avspark.',
+					? 'This tip must be submitted before kickoff.'
+					: 'The remaining match tips must be submitted before kickoff.',
 				href: missingMatchTipHref(match),
 				label: count === 1
-					? isEnglish ? 'Tip the match' : 'Tipp kampen'
-					: isEnglish ? 'Go to match tips' : 'Gå til kamptips',
+					? 'Tip the match'
+					: 'Go to match tips',
 				deadline: match.kickoff,
-				deadlineLabel: isEnglish ? 'Deadline' : 'Frist',
+				deadlineLabel: 'Deadline',
 				match
 			};
 		}
 		if (vmTipsMissing) {
 			return {
 				tone: 'forecast',
-				kicker: isEnglish ? 'Next action' : 'Neste handling',
-				title: isEnglish
-					? 'The Forecast must be submitted before kickoff'
-					: 'VM-tipset må leverast før avspark',
-				body: isEnglish
-					? 'Set groups, best thirds, and knockout before the tournament starts.'
-					: 'Set grupper, beste trearar og sluttspel før turneringa startar.',
+				kicker: 'Next action',
+				title: 'The Forecast must be submitted before kickoff',
+				body: 'Set groups, best thirds, and knockout before the tournament starts.',
 				href: '/forecast',
-				label: isEnglish ? 'Open Forecast' : 'Opne VM-tips',
+				label: 'Open Forecast',
 				deadline: fs.tournamentStart,
-				deadlineLabel: isEnglish ? 'Locks' : 'Låsast'
+				deadlineLabel: 'Locks'
 			};
 		}
 		if (liveMatch) {
 			return {
 				tone: 'live',
-				kicker: isEnglish ? 'Live now' : 'Live no',
-				title: isEnglish
-					? `${resultTeams(liveMatch)} is playing now`
-					: `${resultTeams(liveMatch)} spelast no`,
-				body: `${stageLabel(liveMatch)}${liveMatch.tvChannel ? ` · ${isEnglish ? 'on TV' : 'på TV'}` : ''}`,
+				kicker: 'Live now',
+				title: `${resultTeams(liveMatch)} is playing now`,
+				body: `${stageLabel(liveMatch)}${liveMatch.tvChannel ? ` · on TV` : ''}`,
 				href: matchTipHref(liveMatch),
-				label: isEnglish ? 'View match' : 'Sjå kamp',
+				label: 'View match',
 				match: liveMatch
 			};
 		}
 		if (tournamentFinished) {
 			return {
 				tone: 'done',
-				kicker: isEnglish ? 'Tournament over' : 'Turneringa er over',
-				title: isEnglish ? 'World Cup is over 🎊🏆' : 'VM er over 🎊🏆',
+				kicker: 'Tournament over',
+				title: 'World Cup is over 🎊🏆',
 				body: activeLeagueRow
-					? isEnglish
-						? 'Your final league standings are ready below.'
-						: 'Sluttresultata dine i ligaene ligg klare under.'
-					: isEnglish
-						? 'Thanks for playing. Your final standings are ready below.'
-						: 'Takk for at du spelte. Sluttresultata dine ligg klare under.',
+					? 'Your final league standings are ready below.'
+					: 'Thanks for playing. Your final standings are ready below.',
 				href: leagueHref,
-				label: isEnglish ? 'View standings' : 'Sjå sluttresultat'
+				label: 'View standings'
 			};
 		}
 		if (recentResultWithPoints) {
 			const { match, points } = recentResultWithPoints;
 			return {
 				tone: 'result',
-				kicker: isEnglish ? 'Latest result' : 'Siste resultat',
+				kicker: 'Latest result',
 				title: lastMatchTitle(points),
 				body: `${tipText(match)} · ${pointText(points)}`,
 				href: matchTipHref(match),
-				label: isEnglish ? 'View result' : 'Sjå resultat',
+				label: 'View result',
 				match
 			};
 		}
 		return {
 			tone: 'ready',
-			kicker: isEnglish ? 'All set' : 'Alt klart',
+			kicker: 'All set',
 			title: nextMatch
-				? isEnglish
-					? `All submitted. Next match is ${resultTeams(nextMatch)}`
-					: `Alt er levert. Neste kamp er ${resultTeams(nextMatch)}`
-				: isEnglish ? 'Everything is submitted' : 'Alt er levert',
+				? `All submitted. Next match is ${resultTeams(nextMatch)}`
+				: 'Everything is submitted',
 			body: nextMatch
 				? kickoffLabel(nextMatch.kickoff)
-				: isEnglish ? 'You are ready for the tournament.' : 'Du er klar for turneringa.',
+				: 'You are ready for the tournament.',
 			href: nextMatch ? matchTipHref(nextMatch) : '/tips',
-			label: isEnglish ? 'View matches' : 'Sjå kampar',
+			label: 'View matches',
 			match: nextMatch
 		};
 	});
@@ -587,9 +560,9 @@
 	});
 	let thirdId = $derived(bronzeMatch ? (fs.bracket[koKey(bronzeMatch)] ?? '') : '');
 	let podium = $derived([
-		{ place: 1, label: isEnglish ? 'Winner' : 'Vinnar', id: championId },
-		{ place: 2, label: isEnglish ? 'Runner-up' : 'Andreplass', id: runnerUpId },
-		{ place: 3, label: isEnglish ? 'Third place' : 'Tredjeplass', id: thirdId }
+		{ place: 1, label: 'Winner', id: championId },
+		{ place: 2, label: 'Runner-up', id: runnerUpId },
+		{ place: 3, label: 'Third place', id: thirdId }
 	]);
 	let hasPodium = $derived(podium.some((p) => !!p.id));
 
@@ -603,77 +576,67 @@
 	});
 	let realThirdId = $derived(tournamentFinished && realBronzeMatch ? realBronzeMatch.advancer : '');
 	let realPodiumParams = $derived([
-		{ place: 1, label: isEnglish ? 'World Cup gold' : 'VM-gull', id: realChampionId },
-		{ place: 2, label: isEnglish ? 'World Cup silver' : 'VM-sølv', id: realRunnerUpId },
-		{ place: 3, label: isEnglish ? 'World Cup bronze' : 'VM-bronse', id: realThirdId }
+		{ place: 1, label: 'World Cup gold', id: realChampionId },
+		{ place: 2, label: 'World Cup silver', id: realRunnerUpId },
+		{ place: 3, label: 'World Cup bronze', id: realThirdId }
 	]);
 
 	let forecastPulse = $derived.by(() => {
-		const champion = championId ? teamDisplayName(teamAny(championId), isEnglish ? 'Unknown' : 'Ukjent') : '';
+		const champion = championId ? teamDisplayName(teamAny(championId), 'Unknown') : '';
 		if (!fs.loaded) {
 			return {
-				kicker: isEnglish ? 'Forecast' : 'VM-tips',
-				title: isEnglish ? 'Loading your Forecast' : 'Lastar VM-tipset ditt',
-				body: isEnglish
-					? 'We are checking groups, knockout, and podium.'
-					: 'Vi sjekkar grupper, sluttspel og pall.',
-				label: isEnglish ? 'Open Forecast' : 'Opne VM-tips',
+				kicker: 'Forecast',
+				title: 'Loading your Forecast',
+				body: 'We are checking groups, knockout, and podium.',
+				label: 'Open Forecast',
 				tone: 'loading'
 			};
 		}
 		if (vmTipsMissing) {
 			return {
-				kicker: isEnglish ? 'Forecast' : 'VM-tips',
-				title: isEnglish
-					? 'The Forecast must be submitted before kickoff'
-					: 'VM-tipset må leverast før avspark',
-				body: isEnglish
-					? 'Enter groups, best thirds, and knockout.'
-					: 'Fyll ut grupper, beste trearar og sluttspel.',
-				label: isEnglish ? 'Submit Forecast' : 'Lever VM-tips',
+				kicker: 'Forecast',
+				title: 'The Forecast must be submitted before kickoff',
+				body: 'Enter groups, best thirds, and knockout.',
+				label: 'Submit Forecast',
 				tone: 'urgent'
 			};
 		}
 		if (tournamentFinished) {
 			return {
-				kicker: isEnglish ? 'Forecast' : 'VM-tips',
+				kicker: 'Forecast',
 				title: forecastPointsText(activeLeagueRow?.forecastPoints ?? 0),
 				body: champion
-					? isEnglish ? `You had ${champion} as winner.` : `Du hadde ${champion} som vinnar.`
-					: isEnglish ? 'The tournament is finished.' : 'Turneringa er ferdig.',
-				label: isEnglish ? 'View Forecast' : 'Sjå VM-tips',
+					? `You had ${champion} as winner.`
+					: 'The tournament is finished.',
+				label: 'View Forecast',
 				tone: 'done'
 			};
 		}
 		if (!tournamentStarted) {
 			return {
-				kicker: isEnglish ? 'Forecast' : 'VM-tips',
+				kicker: 'Forecast',
 				title: champion
-					? isEnglish ? `${champion} is your winner` : `${champion} er vinnaren din`
-					: isEnglish ? 'Your Forecast is ready' : 'VM-tipset ditt er klart',
-				body: isEnglish
-					? 'Your podium is locked in when the tournament starts.'
-					: 'Pallen din blir låst når turneringa startar.',
-				label: isEnglish ? 'View Forecast' : 'Sjå VM-tips',
+					? `${champion} is your winner`
+					: 'Your Forecast is ready',
+				body: 'Your podium is locked in when the tournament starts.',
+				label: 'View Forecast',
 				tone: 'ready'
 			};
 		}
 		const alive = teamStillAlive(championId);
 		return {
 			kicker: fs.groupStageDone
-				? isEnglish ? 'Forecast · knockout' : 'VM-tips · sluttspel'
-				: isEnglish ? 'Forecast · group stage' : 'VM-tips · gruppespel',
+				? 'Forecast · knockout'
+				: 'Forecast · group stage',
 			title: champion
 				? alive
-					? isEnglish ? 'Your winner is still alive' : 'Vinnaren din er framleis med'
-					: isEnglish ? 'Your winner is out' : 'Vinnaren din er ute'
-				: isEnglish ? 'Your Forecast is live' : 'VM-tipset ditt er i gang',
+					? 'Your winner is still alive'
+					: 'Your winner is out'
+				: 'Your Forecast is live',
 			body: champion
 				? `${champion}${activeLeagueRow ? ` · ${forecastPointsText(activeLeagueRow.forecastPoints)}` : ''}`
-				: isEnglish
-					? 'Follow groups and knockout as results come in.'
-					: 'Følg grupper og sluttspel etter kvart som resultata kjem.',
-			label: isEnglish ? 'View Forecast' : 'Sjå VM-tips',
+				: 'Follow groups and knockout as results come in.',
+			label: 'View Forecast',
 			tone: alive ? 'ready' : 'out'
 		};
 	});
@@ -709,7 +672,7 @@
 				(a, b) =>
 					a.rank - b.rank ||
 					b.total - a.total ||
-					a.name.localeCompare(b.name, locale)
+					a.name.localeCompare(b.name, 'en-US')
 			);
 	});
 
@@ -720,12 +683,8 @@
 		if (wonLeaguePlacements.length === 1) {
 			const [league] = wonLeaguePlacements;
 			return {
-				title: isEnglish
-					? `Congratulations! You won ${league.name}`
-					: `Gratulerer! Du vann ${league.name}`,
-				body: isEnglish
-					? `You finished first with ${shortPoints(league.total)}.`
-					: `Du enda øvst med ${shortPoints(league.total)}.`
+				title: `Congratulations! You won ${league.name}`,
+				body: `You finished first with ${shortPoints(league.total)}.`
 			};
 		}
 		if (wonLeaguePlacements.length > 1) {
@@ -733,10 +692,8 @@
 				wonLeaguePlacements.map((league) => league.name)
 			);
 			return {
-				title: isEnglish
-					? `Congratulations! You won ${wonLeaguePlacements.length} leagues`
-					: `Gratulerer! Du vann ${wonLeaguePlacements.length} ligaer`,
-				body: isEnglish ? `Wins in ${leagueNames}.` : `Du vann ${leagueNames}.`
+				title: `Congratulations! You won ${wonLeaguePlacements.length} leagues`,
+				body: `Wins in ${leagueNames}.`
 			};
 		}
 		const podiumPlacements = finalLeaguePlacements.filter(
@@ -747,26 +704,20 @@
 				podiumPlacements.map((league) => league.name)
 			);
 			return {
-				title: isEnglish ? 'Tournament finished' : 'Turneringa er ferdig',
-				body: isEnglish
-					? `You reached the podium in ${leagueNames}.`
-					: `Du tok pallplass i ${leagueNames}.`
+				title: 'Tournament finished',
+				body: `You reached the podium in ${leagueNames}.`
 			};
 		}
 		const bestLeague = finalLeaguePlacements[0];
 		if (!bestLeague) {
 			return {
-				title: isEnglish ? 'Tournament finished' : 'Turneringa er ferdig',
-				body: isEnglish
-					? 'Your league standings will show here.'
-					: 'Ligaplaceringane dine kjem her.'
+				title: 'Tournament finished',
+				body: 'Your league standings will show here.'
 			};
 		}
 		return {
-			title: isEnglish ? 'Tournament finished' : 'Turneringa er ferdig',
-			body: isEnglish
-				? `Best finish: #${bestLeague.rank} in ${bestLeague.name}.`
-				: `Beste plassering: #${bestLeague.rank} i ${bestLeague.name}.`
+			title: 'Tournament finished',
+			body: `Best finish: #${bestLeague.rank} in ${bestLeague.name}.`
 		};
 	});
 
@@ -777,7 +728,7 @@
 {:else}
 <header class="home-hero">
 	<div class="hero-copy">
-		<p class="kicker">{isEnglish ? 'World Cup 2026 · 11 June - 19 July' : 'VM 2026 · 11. juni - 19. juli'}</p>
+		<p class="kicker">World Cup 2026 · 11 June - 19 July</p>
 		<h1 class="hero-greeting">
 			<span class="greet">{greeting()}</span>{#if firstName(auth.user?.name ?? '')}<span class="punct">,</span> <span class="name">{firstName(auth.user?.name ?? '')}</span>{/if}
 		</h1>
@@ -785,7 +736,7 @@
 	<div class="hero-chips">
 		{#if leaguesLoaded}
 			{#if leaguesError}
-				<span class="hero-chip error-pill">{isEnglish ? 'League status missing' : 'Ligastatus manglar'}</span>
+				<span class="hero-chip error-pill">League status missing</span>
 			{/if}
 			{#each leagues as lg (lg.id)}
 				{@const leagueLb = leaderboards[lg.id] ?? []}
@@ -800,7 +751,7 @@
 		{/if}
 		{#if activeLeagueRow}
 			<a href={leagueHref} class="hero-chip points-pill">
-				<span>{isEnglish ? 'Points' : 'Poeng'}</span>
+				<span>Points</span>
 				<b>{totalPoints}</b>
 			</a>
 		{/if}
@@ -907,7 +858,7 @@
 						{#if playedM(nowHero.match) || nowHero.match.status === 'live'}
 							{scoreText(nowHero.match)}
 						{:else}
-							{isEnglish ? 'vs' : 'mot'}
+							vs
 						{/if}
 					</strong>
 					<span class="away">
@@ -927,8 +878,8 @@
 		{#if tipsStore.loaded && totalMatches > 0 && missingMatchTips.length > 0}
 			<div class="tip-progress-panel" style={`--tip-progress: ${progressPct}%`}>
 				<div class="tip-progress-info">
-					<span><b>{submittedOpenMatchTipCount}</b> {isEnglish ? `of ${openMatchTipCount} open matches submitted` : `av ${openMatchTipCount} opne kampar leverte`}</span>
-					<span class="muted">{isEnglish ? `${missingMatchTips.length} missing` : `${missingMatchTips.length} manglar`}</span>
+					<span><b>{submittedOpenMatchTipCount}</b> {`of ${openMatchTipCount} open matches submitted`}</span>
+					<span class="muted">{`${missingMatchTips.length} missing`}</span>
 				</div>
 				<div class="tip-progress-track" aria-hidden="true">
 					<span></span>
@@ -945,17 +896,17 @@
 	{#if !tournamentFinished && tournamentStarted && activeLeague && leagueProgress && leagueProgress.events.length > 0}
 		<section class="card tile progress-card home-span-support">
 			<div class="hd">
-				<h3><Activity size={15} style="margin-right:0.35rem;vertical-align:-2px;color:var(--accent)" /> {isEnglish ? 'Points trend' : 'Poengtrend'}</h3>
-				<a class="hdlink" href={leagueHref}>{isEnglish ? 'League' : 'Liga'}</a>
+				<h3><Activity size={15} style="margin-right:0.35rem;vertical-align:-2px;color:var(--accent)" /> Points trend</h3>
+				<a class="hdlink" href={leagueHref}>League</a>
 			</div>
 
 			<div class="progress-summary">
 				<span>
-						<i>{isEnglish ? 'Match points' : 'Kamppoeng'}</i>
+						<i>Match points</i>
 					<b>{shortPoints(leagueProgress.summary.tipsPoints)}</b>
 				</span>
 					<span>
-						<i>{isEnglish ? 'Last 3' : 'Siste 3'}</i>
+						<i>Last 3</i>
 					<b class:zero={leagueProgress.summary.last5Points === 0}
 						>{shortPoints(leagueProgress.summary.last5Points, true)}</b
 					>
@@ -1001,13 +952,13 @@
 	{#if tournamentStarted && leaguesLoaded && activeLeague && activeLeagueRow && lb.length > 1}
 		<section class="card tile standing-card home-span-support">
 			<div class="hd">
-				<h3><Crown size={15} style="margin-right:0.35rem;vertical-align:-2px;color:var(--gold)" /> {isEnglish ? 'League table' : 'Ligatabell'}</h3>
+				<h3><Crown size={15} style="margin-right:0.35rem;vertical-align:-2px;color:var(--gold)" /> League table</h3>
 				<div class="league-card-actions">
 					{#if leagues.length > 1}
 						<div class="league-select-shell">
 							<select
 								class="league-select"
-								aria-label={isEnglish ? 'Choose league for league table' : 'Vel liga for ligatabell'}
+								aria-label="Choose league for league table"
 								value={activeLeague.id}
 								onchange={onLeagueSelect}
 							>
@@ -1018,7 +969,7 @@
 							<ChevronDown size={15} />
 						</div>
 					{/if}
-					<a class="hdlink" href={leagueHref}>{isEnglish ? 'Full table' : 'Heile tabellen'}</a>
+					<a class="hdlink" href={leagueHref}>Full table</a>
 				</div>
 			</div>
 
@@ -1029,20 +980,14 @@
 					<i>
 						{#if myRank === 1}
 							{tournamentFinished
-								? isEnglish
-									? 'You won the league'
-									: 'Du vann ligaen'
-								: isEnglish
-									? 'You lead the league'
-									: 'Du leiar ligaen'}
+								? 'You won the league'
+								: 'You lead the league'}
 						{:else if personAbove && gapToAbove > 0}
-							{isEnglish
-								? `${shortPoints(gapToAbove)} behind ${personAbove.name}`
-								: `${shortPoints(gapToAbove)} bak ${personAbove.name}`}
+							{`${shortPoints(gapToAbove)} behind ${personAbove.name}`}
 							{:else if personAbove}
-								{isEnglish ? `Level with ${personAbove.name}` : `Lik med ${personAbove.name}`}
+								{`Level with ${personAbove.name}`}
 							{:else}
-								{isEnglish ? 'You are on the table' : 'Du er på tabellen'}
+								You are on the table
 						{/if}
 					</i>
 				</span>
@@ -1052,9 +997,9 @@
 				<div class="league-gaps">
 				{#if personAbove}
 					<span>
-						<i>{isEnglish ? 'Chasing' : 'Jaktar'}</i>
+						<i>Chasing</i>
 						<b>{personAbove.name}</b>
-						<em>{gapToAbove > 0 ? (isEnglish ? `${shortPoints(gapToAbove)} behind` : `${shortPoints(gapToAbove)} bak`) : (isEnglish ? 'level' : 'likt')}</em>
+						<em>{gapToAbove > 0 ? `${shortPoints(gapToAbove)} behind` : 'level'}</em>
 					</span>
 				{/if}
 				</div>
@@ -1067,7 +1012,7 @@
 						<span class="mini-name">
 							<Avatar name={row.name} src={row.avatarUrl} size={24} />
 							<b>{row.name}</b>
-							{#if row.userId === auth.user?.id}<i>{isEnglish ? 'you' : 'deg'}</i>{/if}
+							{#if row.userId === auth.user?.id}<i>you</i>{/if}
 						</span>
 						<strong>{shortPoints(row.total)}</strong>
 					</a>
@@ -1079,13 +1024,13 @@
 	{#if !tournamentFinished && chatLoaded && (chatItems.length > 0 || chatError)}
 		<section class="card tile chat-preview-card home-span-support" class:has-unread={unreadChatItems.length > 0}>
 			<div class="hd">
-				<h3><MessageCircle size={15} style="margin-right:0.35rem;vertical-align:-2px;color:var(--accent)" /> {isEnglish ? 'Latest from league chat' : 'Siste frå liga-chatten'}</h3>
-				<a class="hdlink" href="/leagues">{isEnglish ? 'Leagues' : 'Ligaer'}</a>
+				<h3><MessageCircle size={15} style="margin-right:0.35rem;vertical-align:-2px;color:var(--accent)" /> Latest from league chat</h3>
+				<a class="hdlink" href="/leagues">Leagues</a>
 			</div>
 
 			<div class="chat-preview-list">
 				{#if chatError}
-					<p class="muted chat-error">{isEnglish ? 'Could not fetch the latest chat right now.' : 'Kunne ikkje hente siste chat no.'}</p>
+					<p class="muted chat-error">Could not fetch the latest chat right now.</p>
 				{/if}
 				{#each chatItems as item (item.leagueId)}
 					<a class="chat-preview" class:unread={item.unread > 0} href={`/leagues/${item.leagueId}#chat`}>
@@ -1097,15 +1042,15 @@
 							</span>
 							{#if item.message}
 								<span class="chat-text">
-									<strong>{item.message.userId === auth.user?.id ? (isEnglish ? 'You' : 'Du') : item.message.user.name}:</strong>
+									<strong>{item.message.userId === auth.user?.id ? 'You' : item.message.user.name}:</strong>
 									{chatPreview(item.message.text)}
 								</span>
 							{:else}
-								<span class="chat-text muted">{isEnglish ? 'No messages yet' : 'Ingen meldingar enno'}</span>
+								<span class="chat-text muted">No messages yet</span>
 							{/if}
 						</span>
 						<span class="chat-jump">
-							{#if item.message}{chatTimeLabel(item.message.created)}{:else}{isEnglish ? 'Open' : 'Opne'}{/if}
+							{#if item.message}{chatTimeLabel(item.message.created)}{:else}Open{/if}
 							<ArrowUpRight size={14} />
 						</span>
 					</a>
@@ -1130,7 +1075,7 @@
 								<i>{pick.place}</i>
 								<b>
 									<Flag iso2={pickedTeam?.iso2 ?? ''} code={pickedTeam?.fifaCode ?? ''} size={15} />
-									{teamDisplayName(pickedTeam, isEnglish ? 'Unknown' : 'Ukjent')}
+									{teamDisplayName(pickedTeam, 'Unknown')}
 								</b>
 							</span>
 						{/if}
@@ -1157,7 +1102,7 @@
 								<i>{pick.label}</i>
 								<b>
 									<Flag iso2={pickedTeam?.iso2 ?? ''} code={pickedTeam?.fifaCode ?? ''} size={16} />
-									{teamDisplayName(pickedTeam, isEnglish ? 'Unknown' : 'Ukjent')}
+									{teamDisplayName(pickedTeam, 'Unknown')}
 								</b>
 							</span>
 						</div>
@@ -1170,7 +1115,7 @@
 	{#if nextMatchesPreview.length > 0}
 		<section class="card tile next-card home-span-primary">
 			<div class="hd">
-				<h3><Clock size={15} style="margin-right:0.35rem;vertical-align:-2px;color:var(--accent)" /> {isEnglish ? 'Upcoming matches' : 'Komande kampar'}</h3>
+				<h3><Clock size={15} style="margin-right:0.35rem;vertical-align:-2px;color:var(--accent)" /> Upcoming matches</h3>
 			</div>
 
 			<div class="ready-list">
@@ -1180,9 +1125,9 @@
 							<span>{kickoffLabel(match.kickoff)}</span>
 							<span class="spacer"></span>
 							{#if tipsStore.tips[match.id]}
-								<i class="ready-state ok">{isEnglish ? 'Submitted' : 'Tipset'}</i>
+								<i class="ready-state ok">Submitted</i>
 							{:else if teamsResolved(match) && !isLocked(match)}
-								<i class="ready-state warn">{isEnglish ? 'Missing' : 'Manglar'}</i>
+								<i class="ready-state warn">Missing</i>
 							{/if}
 						</span>
 						<span class="ready-stage">{stageLabel(match)}</span>
@@ -1193,7 +1138,7 @@
 								{/if}
 								<b>{teamLabel(match, 'h')}</b>
 							</span>
-							<span class="ready-vs">{isEnglish ? 'vs' : 'mot'}</span>
+							<span class="ready-vs">vs</span>
 							<span class="ready-team away">
 								<b>{teamLabel(match, 'a')}</b>
 								{#if team(match.awayTeam)}
@@ -1214,14 +1159,14 @@
 				<h3>
 					{#if tournamentFinished}
 						<Trophy size={15} style="margin-right:0.35rem;vertical-align:-2px;color:var(--gold)" />
-						{isEnglish ? 'Final standings' : 'Sluttresultat'}
+						Final standings
 					{:else}
 						<ListChecks size={15} style="margin-right:0.35rem;vertical-align:-2px;color:var(--accent)" />
-						{isEnglish ? 'Latest results' : 'Siste resultat'}
+						Latest results
 					{/if}
 				</h3>
 				{#if tournamentFinished && finalLeaguePlacements.length > 0}
-					<a class="hdlink" href="/leagues">{isEnglish ? 'All leagues' : 'Alle ligaer'}</a>
+					<a class="hdlink" href="/leagues">All leagues</a>
 				{/if}
 			</div>
 			{#if tournamentFinished && finalLeaguePlacements.length > 0}
@@ -1270,12 +1215,12 @@
 							</span>
 							<span class="yp">
 								{#if t}
-									<i class="muted">{isEnglish ? 'Yours' : 'Ditt'}: {t.ftHome}–{t.ftAway}</i>
+									<i class="muted">Yours: {t.ftHome}–{t.ftAway}</i>
 									<b class:plus={pts > 0} class:zero={pts === 0}
 										>{pointText(pts)}</b
 									>
 								{:else}
-									<i class="muted">{isEnglish ? 'Not tipped' : 'Ikkje tipset'}</i>
+									<i class="muted">Not tipped</i>
 								{/if}
 							</span>
 						</li>
@@ -1289,7 +1234,7 @@
 		<!-- Legg til ekte turnerings-pallkort -->
 		<section class="card champ tile podium-card home-span-support">
 			<div class="hd">
-				<h3><Crown size={15} style="margin-right:0.35rem;vertical-align:-2px;color:var(--gold)" /> {isEnglish ? 'World champion' : 'Verdsmeister'}</h3>
+				<h3><Crown size={15} style="margin-right:0.35rem;vertical-align:-2px;color:var(--gold)" /> World champion</h3>
 			</div>
 			<div class="podium-list">
 				{#each realPodiumParams as pick (pick.place)}
@@ -1305,7 +1250,7 @@
 								<i>{pick.label}</i>
 								<b>
 									<Flag iso2={pickedTeam?.iso2 ?? ''} code={pickedTeam?.fifaCode ?? ''} size={16} />
-									{teamDisplayName(pickedTeam, isEnglish ? 'Unknown' : 'Ukjent')}
+									{teamDisplayName(pickedTeam, 'Unknown')}
 								</b>
 							</span>
 						</div>

@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { Info } from '@lucide/svelte';
-	import { language } from '$lib/language.svelte';
 	import { strings } from '$lib/strings';
 
-	const t = $derived(strings[language.resolved]);
+	const t = strings;
 </script>
 
 <a class="info-button" href="/info" aria-label={t.chrome.about} title={t.chrome.about}>

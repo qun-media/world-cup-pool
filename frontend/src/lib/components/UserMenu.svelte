@@ -2,7 +2,6 @@
 	import { auth } from '$lib/auth.svelte';
 	import { serverClock } from '$lib/serverclock.svelte';
 	import { theme } from '$lib/theme.svelte';
-	import { language } from '$lib/language.svelte';
 	import { strings } from '$lib/strings';
 	import Avatar from './Avatar.svelte';
 	import {
@@ -10,7 +9,6 @@
 		ChevronDown,
 		FlaskConical,
 		Info,
-		Languages,
 		Moon,
 		Settings,
 		Sun,
@@ -28,7 +26,7 @@
 	let root: HTMLElement;
 	const isDark = $derived(theme.resolved === 'dark');
 	const isWorldCup = $derived(theme.isWorldCup);
-	const t = $derived(strings[language.resolved]);
+	const t = strings;
 
 	function toggleTheme() {
 		theme.toggle();
@@ -81,9 +79,6 @@
 			<a class="item" href="/info" onclick={() => (open = false)}>
 				<Info size={17} /> {t.chrome.about}
 			</a>
-			<button class="item" type="button" onclick={() => language.toggle()}>
-				<Languages size={17} /> {t.chrome.language}
-			</button>
 			{#if showThemeAction}
 				<button class="item" type="button" onclick={toggleTheme}>
 					{#if isDark}
@@ -103,7 +98,7 @@
 			</button>
 			{#if serverClock.dev}
 				<a class="item" href="/dev" onclick={() => (open = false)}>
-					<FlaskConical size={17} /> Utviklerverktøy
+					<FlaskConical size={17} /> Developer tools
 				</a>
 			{/if}
 			<button class="item" type="button" onclick={() => auth.logout()}>

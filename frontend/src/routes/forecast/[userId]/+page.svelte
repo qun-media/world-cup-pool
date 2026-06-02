@@ -5,17 +5,15 @@
 	import { teamDisplayName } from '$lib/teamNames';
 	import { collapseOnScroll } from '$lib/actions';
 	import { Check, CircleCheck, X, Trophy, ArrowLeft } from '@lucide/svelte';
-	import { language } from '$lib/language.svelte';
 	import { stageName as knockoutStageName } from '$lib/stageLabels';
 
 	const fs = new ForecastStore();
 	let section = $state<'groups' | 'thirds' | 'bracket'>('groups');
 	let err = $state('');
-	const isEnglish = $derived(language.isEnglish);
 
 	$effect(() => {
 		const uid = $page.params.userId;
-		if (uid) fs.loadView(uid).catch((e) => (err = e?.message ?? (isEnglish ? 'Not allowed' : 'Ikkje tilgang')));
+		if (uid) fs.loadView(uid).catch((e) => (err = e?.message ?? 'Not allowed'));
 	});
 
 	const ord = (n: number) =>
@@ -46,22 +44,22 @@
 </script>
 
 <button class="muted back" type="button" onclick={() => history.back()}>
-	<ArrowLeft size={15} /> {isEnglish ? 'Back' : 'Tilbake'}
+	<ArrowLeft size={15} /> Back
 </button>
 
 <div class="stickyhead" use:collapseOnScroll>
-	<p class="kicker">{isEnglish ? 'Forecast' : 'VM-tips'}</p>
+	<p class="kicker">Forecast</p>
 	<div class="sh-expand">
 		<div class="sh-inner">
 			<h1>{fs.viewName || '…'}</h1>
-			<p class="muted desc">{isEnglish ? "Read-only - a friend's Forecast." : 'Skriveverna - VM-tipset til ein ven.'}</p>
+			<p class="muted desc">Read-only - a friend's Forecast.</p>
 		</div>
 	</div>
 	{#if fs.loaded}
 		<div class="seg">
-			<button class:on={section === 'groups'} onclick={() => (section = 'groups')}>{isEnglish ? 'Groups' : 'Grupper'}</button>
-			<button class:on={section === 'thirds'} onclick={() => (section = 'thirds')}>{isEnglish ? 'Best thirds' : 'Beste trearar'}</button>
-			<button class:on={section === 'bracket'} onclick={() => (section = 'bracket')}>{isEnglish ? 'Knockout' : 'Sluttspel'}</button>
+			<button class:on={section === 'groups'} onclick={() => (section = 'groups')}>Groups</button>
+			<button class:on={section === 'thirds'} onclick={() => (section = 'thirds')}>Best thirds</button>
+			<button class:on={section === 'bracket'} onclick={() => (section = 'bracket')}>Knockout</button>
 		</div>
 	{/if}
 </div>
@@ -69,11 +67,11 @@
 {#if err}
 	<p class="error">{err}</p>
 {:else if !fs.loaded}
-	<p class="muted">{isEnglish ? 'Loading…' : 'Lastar…'}</p>
+	<p class="muted">Loading…</p>
 {:else if section === 'groups'}
 	{#each fs.groups as g (g.letter)}
 		<section class="card grp">
-			<h3>{isEnglish ? 'Group' : 'Gruppe'} {g.letter}</h3>
+			<h3>Group {g.letter}</h3>
 			{#each fs.groupOrder[g.letter] as id, i (id)}
 				{@const ao = fs.actualOrder(g.letter)}
 				{@const apos = ao ? ao.indexOf(id) + 1 : 0}
@@ -98,10 +96,10 @@
 					<span class="nm">{tname(id)}</span>
 					<span class="tag">
 						{#if state === 'ok'}<span class="ind ok"><Check size={15} /></span>
-						{:else if state === 'half'}<span class="apos half">{isEnglish ? 'actual' : 'faktisk'} {ord(apos)}</span><span class="ind half"><CircleCheck size={15} /></span>
-						{:else if state === 'miss'}<span class="apos">{isEnglish ? 'actual' : 'faktisk'} {ord(apos)}</span><span class="ind no"><X size={15} /></span>
-						{:else if i < 2}<span class="pill ok">{isEnglish ? 'advances' : 'går vidare'}</span>
-						{:else if i === 2}<span class="pill">{isEnglish ? '3rd' : '3.'}</span>{/if}
+						{:else if state === 'half'}<span class="apos half">actual {ord(apos)}</span><span class="ind half"><CircleCheck size={15} /></span>
+						{:else if state === 'miss'}<span class="apos">actual {ord(apos)}</span><span class="ind no"><X size={15} /></span>
+						{:else if i < 2}<span class="pill ok">advances</span>
+						{:else if i === 2}<span class="pill">3rd</span>{/if}
 					</span>
 				</div>
 			{/each}
@@ -125,14 +123,14 @@
 			{/if}
 		{/each}
 		{#if Object.keys(fs.thirds).length === 0}
-			<p class="muted small">{isEnglish ? 'No best-third picks.' : 'Ingen beste-trearar er valde.'}</p>
+			<p class="muted small">No best-third picks.</p>
 		{/if}
 	</section>
 {:else}
 	{#if champion}
 		<div class="card champ">
 			<Trophy size={20} />
-			<span class="lbl">{isEnglish ? 'Predicted champion' : 'Tippa meister'}</span>
+			<span class="lbl">Predicted champion</span>
 			<Flag iso2={fs.team(champion)?.iso2 ?? ''} code={fs.team(champion)?.fifaCode ?? ''} size={26} />
 			<b>{tname(champion)}</b>
 		</div>

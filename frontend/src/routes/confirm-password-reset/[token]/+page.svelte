@@ -2,7 +2,6 @@
 	import { auth } from '$lib/auth.svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { language } from '$lib/language.svelte';
 	import { strings } from '$lib/strings';
 
 	let token = $derived($page.params.token ?? '');
@@ -11,7 +10,7 @@
 	let busy = $state(false);
 	let error = $state('');
 	let done = $state(false);
-	const t = $derived(strings[language.resolved]);
+	const t = strings;
 
 	async function submit(e: Event) {
 		e.preventDefault();

@@ -1,13 +1,12 @@
 <script lang="ts">
 	import { auth } from '$lib/auth.svelte';
-	import { language } from '$lib/language.svelte';
 	import { strings } from '$lib/strings';
 
 	let email = $state('');
 	let busy = $state(false);
 	let sent = $state(false);
 	let error = $state('');
-	const t = $derived(strings[language.resolved]);
+	const t = strings;
 
 	async function submit(e: Event) {
 		e.preventDefault();

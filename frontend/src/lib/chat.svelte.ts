@@ -1,5 +1,4 @@
 import { pb } from './pb';
-import { isRuntimeEnglish } from './runtimeLanguage';
 
 export const CHAT_EMOJIS = ['👍', '🔥', '😂', '❤️', '👏', '😮', '😢', '⚽'];
 
@@ -42,10 +41,6 @@ type RecordEvent = {
 	record: Record<string, unknown>;
 };
 
-function chatError(nn: string, en: string) {
-	return isRuntimeEnglish() ? en : nn;
-}
-
 class LeagueChatStore {
 	messages = $state<ChatMessage[]>([]);
 	loaded = $state(false);
@@ -79,7 +74,7 @@ class LeagueChatStore {
 			this.loaded = true;
 			await this.connect(leagueId);
 		} catch {
-			this.error = chatError('Kunne ikkje laste chatten.', 'Could not load the chat.');
+			this.error = 'Could not load the chat.';
 		} finally {
 			this.loading = false;
 		}
@@ -97,7 +92,7 @@ class LeagueChatStore {
 			);
 			this.upsertMessage(data.message);
 		} catch {
-			this.error = chatError('Kunne ikkje sende meldinga.', 'Could not send the message.');
+			this.error = 'Could not send the message.';
 			throw new Error(this.error);
 		} finally {
 			this.sending = false;
@@ -115,7 +110,7 @@ class LeagueChatStore {
 			);
 			this.upsertMessage(data.message);
 		} catch {
-			this.error = chatError('Kunne ikkje lagre endringa.', 'Could not save the edit.');
+			this.error = 'Could not save the edit.';
 			throw new Error(this.error);
 		}
 	}
@@ -130,7 +125,7 @@ class LeagueChatStore {
 			);
 			this.messages = this.messages.filter((m) => m.id !== messageId);
 		} catch {
-			this.error = chatError('Kunne ikkje slette meldinga.', 'Could not delete the message.');
+			this.error = 'Could not delete the message.';
 			throw new Error(this.error);
 		}
 	}
@@ -145,7 +140,7 @@ class LeagueChatStore {
 			);
 			this.queueRefresh();
 		} catch {
-			this.error = chatError('Kunne ikkje oppdatere reaksjonen.', 'Could not update the reaction.');
+			this.error = 'Could not update the reaction.';
 			throw new Error(this.error);
 		}
 	}

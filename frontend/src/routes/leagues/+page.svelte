@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { api, type LeagueSummary } from '$lib/api';
 	import { goto } from '$app/navigation';
-	import { language } from '$lib/language.svelte';
 	import PendingInvites from '$lib/components/PendingInvites.svelte';
 	import { ArrowRight, Crown, Globe2, LogIn, Plus, Users } from '@lucide/svelte';
 
@@ -11,7 +10,6 @@
 	let joinCode = $state('');
 	let error = $state('');
 	let busy = $state(false);
-	const isEnglish = $derived(language.isEnglish);
 
 	async function load() {
 		try {
@@ -35,7 +33,7 @@
 			newName = '';
 			goto(`/leagues/${r.id}`);
 		} catch {
-			error = isEnglish ? 'Could not create league.' : 'Kunne ikkje opprette liga.';
+			error = 'Could not create league.';
 		} finally {
 			busy = false;
 		}
@@ -50,7 +48,7 @@
 			joinCode = '';
 			goto(`/leagues/${r.id}`);
 		} catch {
-			error = isEnglish ? 'Invalid invite code.' : 'Ugyldig invitasjonskode.';
+			error = 'Invalid invite code.';
 		} finally {
 			busy = false;
 		}
@@ -58,16 +56,14 @@
 
 	function roleLabel(league: LeagueSummary) {
 		if (league.inviteCode === 'GLOBAL') return 'Global';
-		return league.role === 'owner'
-			? isEnglish ? 'Owner' : 'Eigar'
-			: isEnglish ? 'Member' : 'Medlem';
+		return league.role === 'owner' ? 'Owner' : 'Member';
 	}
 </script>
 
 <header class="league-hero">
-	<p class="kicker">{isEnglish ? 'Play against your friends' : 'Spel mot venene dine'}</p>
-	<h1>{isEnglish ? 'Leagues' : 'Ligaer'}</h1>
-	<p class="muted">{isEnglish ? 'Pick a league, see the table, and jump straight to chat.' : 'Vel ei liga, sjå tabellen og hopp rett til chat.'}</p>
+	<p class="kicker">Play against your friends</p>
+	<h1>Leagues</h1>
+	<p class="muted">Pick a league, see the table, and jump straight to chat.</p>
 </header>
 
 <PendingInvites compact />
@@ -75,8 +71,8 @@
 <section class="league-section">
 	<div class="section-head">
 		<div>
-			<p class="kicker">{isEnglish ? 'Overview' : 'Oversikt'}</p>
-			<h2>{isEnglish ? 'Your leagues' : 'Ligaene dine'}</h2>
+			<p class="kicker">Overview</p>
+			<h2>Your leagues</h2>
 		</div>
 		{#if loaded}<span class="count-pill">{leagues.length}</span>{/if}
 	</div>
@@ -87,8 +83,8 @@
 		</div>
 	{:else if leagues.length === 0}
 		<div class="empty-state">
-			<strong>{isEnglish ? 'No leagues yet' : 'Ingen ligaer enno'}</strong>
-			<p class="muted">{isEnglish ? 'Create a league or join with an invite code.' : 'Opprett ei liga eller bli med med invitasjonskode.'}</p>
+			<strong>No leagues yet</strong>
+			<p class="muted">Create a league or join with an invite code.</p>
 		</div>
 	{:else}
 		<div class="league-grid">
@@ -109,8 +105,8 @@
 							<i>{roleLabel(league)}</i>
 						</span>
 						<span class="league-meta">
-							<span><Users size={14} /> {league.members} {isEnglish ? (league.members === 1 ? 'member' : 'members') : (league.members === 1 ? 'medlem' : 'medlemer')}</span>
-							{#if league.inviteCode !== 'GLOBAL'}<span>{isEnglish ? 'Code' : 'Kode'} {league.inviteCode}</span>{/if}
+							<span><Users size={14} /> {league.members} {league.members === 1 ? 'member' : 'members'}</span>
+							{#if league.inviteCode !== 'GLOBAL'}<span>Code {league.inviteCode}</span>{/if}
 						</span>
 					</span>
 					<span class="go"><ArrowRight size={18} /></span>
@@ -125,15 +121,15 @@
 		<div class="action-title">
 			<span class="action-icon"><Plus size={18} /></span>
 			<div>
-				<h3>{isEnglish ? 'Create league' : 'Opprett liga'}</h3>
-				<p class="muted">{isEnglish ? 'Start a new private competition.' : 'Start ei ny privat tevling.'}</p>
+				<h3>Create league</h3>
+				<p class="muted">Start a new private competition.</p>
 			</div>
 		</div>
 		<form onsubmit={create}>
 			<div class="field">
-				<input class="input" placeholder={isEnglish ? 'League name' : 'Liganamn'} bind:value={newName} required />
+				<input class="input" placeholder="League name" bind:value={newName} required />
 			</div>
-			<button class="btn" disabled={busy || !newName.trim()}>{isEnglish ? 'Create' : 'Opprett'}</button>
+			<button class="btn" disabled={busy || !newName.trim()}>Create</button>
 		</form>
 	</section>
 
@@ -141,8 +137,8 @@
 		<div class="action-title">
 			<span class="action-icon secondary"><LogIn size={18} /></span>
 			<div>
-				<h3>{isEnglish ? 'Join' : 'Bli med'}</h3>
-				<p class="muted">{isEnglish ? 'Paste the code from the invite.' : 'Lim inn koden frå invitasjonen.'}</p>
+				<h3>Join</h3>
+				<p class="muted">Paste the code from the invite.</p>
 			</div>
 		</div>
 		<form onsubmit={join}>
@@ -154,7 +150,7 @@
 					required
 				/>
 			</div>
-			<button class="btn secondary" disabled={busy || !joinCode.trim()}>{isEnglish ? 'Join' : 'Bli med'}</button>
+			<button class="btn secondary" disabled={busy || !joinCode.trim()}>Join</button>
 		</form>
 	</section>
 </div>

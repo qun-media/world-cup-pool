@@ -3,7 +3,6 @@
 	import { Check, Edit3, Send, SmilePlus, Trash2, Wifi, WifiOff, X } from '@lucide/svelte';
 	import { auth } from '$lib/auth.svelte';
 	import { CHAT_EMOJIS, leagueChat, type ChatMessage } from '$lib/chat.svelte';
-	import { language } from '$lib/language.svelte';
 	import Avatar from './Avatar.svelte';
 
 	let { leagueId }: { leagueId: string } = $props();
@@ -38,54 +37,29 @@
 		listEl.scrollTop = listEl.scrollHeight;
 	}
 
-	const locale = $derived(language.locale);
-	const copy = $derived(
-		language.isEnglish
-			? {
-				now: 'now',
-				kicker: 'League chat',
-				title: 'Talk with your league',
-				syncing: 'Syncing',
-				loading: 'Loading chat…',
-				emptyTitle: 'No messages yet',
-				emptyBody: 'Start the chat with a quick hello or a reaction to the table.',
-				you: 'You',
-				edited: 'edited',
-				messageOptions: 'Message options',
-				addReaction: 'Add reaction',
-				edit: 'Edit',
-				delete: 'Delete',
-				save: 'Save',
-				cancel: 'Cancel',
-				deleteConfirm: 'Delete message?',
-				placeholder: 'Write a message…',
-				chooseEmoji: 'Choose emoji',
-				sending: 'Sending…',
-				send: 'Send'
-			}
-			: {
-				now: 'no',
-				kicker: 'Liga-chat',
-				title: 'Prat med ligaen',
-				syncing: 'Synkar',
-				loading: 'Lastar chat…',
-				emptyTitle: 'Ingen meldingar enno',
-				emptyBody: 'Start praten med ein kort helsing eller ein reaksjon på tabellen.',
-				you: 'Du',
-				edited: 'redigert',
-				messageOptions: 'Meldingsval',
-				addReaction: 'Legg til reaksjon',
-				edit: 'Rediger',
-				delete: 'Slett',
-				save: 'Lagre',
-				cancel: 'Avbryt',
-				deleteConfirm: 'Slette meldinga?',
-				placeholder: 'Skriv ei melding…',
-				chooseEmoji: 'Vel emoji',
-				sending: 'Sender…',
-				send: 'Send'
-			}
-	);
+	const locale = 'en-US';
+	const copy = {
+		now: 'now',
+		kicker: 'League chat',
+		title: 'Talk with your league',
+		syncing: 'Syncing',
+		loading: 'Loading chat…',
+		emptyTitle: 'No messages yet',
+		emptyBody: 'Start the chat with a quick hello or a reaction to the table.',
+		you: 'You',
+		edited: 'edited',
+		messageOptions: 'Message options',
+		addReaction: 'Add reaction',
+		edit: 'Edit',
+		delete: 'Delete',
+		save: 'Save',
+		cancel: 'Cancel',
+		deleteConfirm: 'Delete message?',
+		placeholder: 'Write a message…',
+		chooseEmoji: 'Choose emoji',
+		sending: 'Sending…',
+		send: 'Send'
+	};
 
 	function timeLabel(iso: string) {
 		const then = new Date(iso).getTime();

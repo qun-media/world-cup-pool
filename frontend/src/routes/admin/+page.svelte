@@ -1,13 +1,10 @@
 <script lang="ts">
 	import PocketBase from 'pocketbase';
 	import { browser } from '$app/environment';
-	import { language } from '$lib/language.svelte';
 
 	// Isolated PB client so superuser login doesn't touch the regular user session.
 	const adminPb = new PocketBase(browser ? window.location.origin : '/');
 	adminPb.autoCancellation(false);
-
-	const isEnglish = $derived(language.isEnglish);
 
 	// Superuser auth state (separate from regular user auth).
 	let loggedIn = $state(false);
@@ -33,7 +30,7 @@
 			loggedIn = true;
 			password = '';
 		} catch {
-			loginError = isEnglish ? 'Invalid credentials.' : 'Feil e-post eller passord.';
+			loginError = 'Invalid credentials.';
 		} finally {
 			loginBusy = false;
 		}
@@ -45,10 +42,10 @@
 		try {
 			await adminPb.send('/api/admin/rankings/refresh', { method: 'POST' });
 			rankingsTone = 'ok';
-			rankingsMsg = isEnglish ? 'Rankings refreshed.' : 'Rankingar oppdaterte.';
+			rankingsMsg = 'Rankings refreshed.';
 		} catch (e: unknown) {
 			rankingsTone = 'error';
-			rankingsMsg = (e as { message?: string })?.message ?? (isEnglish ? 'Failed.' : 'Feila.');
+			rankingsMsg = (e as { message?: string })?.message ?? 'Failed.';
 		} finally {
 			rankingsBusy = false;
 		}
@@ -60,10 +57,10 @@
 		try {
 			await adminPb.send('/api/sync/refresh', { method: 'POST' });
 			syncTone = 'ok';
-			syncMsg = isEnglish ? 'Sync complete.' : 'Synkronisert.';
+			syncMsg = 'Sync complete.';
 		} catch (e: unknown) {
 			syncTone = 'error';
-			syncMsg = (e as { message?: string })?.message ?? (isEnglish ? 'Failed.' : 'Feila.');
+			syncMsg = (e as { message?: string })?.message ?? 'Failed.';
 		} finally {
 			syncBusy = false;
 		}
@@ -76,58 +73,54 @@
 </script>
 
 <div class="page">
-	<h1>{isEnglish ? 'Admin' : 'Admin'}</h1>
+	<h1>Admin</h1>
 
 	{#if !loggedIn}
 		<div class="card login-card">
-			<h2>{isEnglish ? 'Superuser login' : 'Superbrukar-innlogging'}</h2>
-			<p class="muted">{isEnglish ? 'Log in with your PocketBase admin credentials.' : 'Logg inn med PocketBase-admin-legitimasjonen din.'}</p>
+			<h2>Superuser login</h2>
+			<p class="muted">Log in with your PocketBase admin credentials.</p>
 			<form onsubmit={(e) => { e.preventDefault(); loginSuperuser(); }}>
 				<label>
-					{isEnglish ? 'Email' : 'E-post'}
+					Email
 					<input type="email" bind:value={email} required autocomplete="username" />
 				</label>
 				<label>
-					{isEnglish ? 'Password' : 'Passord'}
+					Password
 					<input type="password" bind:value={password} required autocomplete="current-password" />
 				</label>
 				{#if loginError}<p class="msg error">{loginError}</p>{/if}
 				<button type="submit" disabled={loginBusy} class="btn-primary">
-					{loginBusy ? (isEnglish ? 'Logging in…' : 'Logger inn…') : (isEnglish ? 'Log in' : 'Logg inn')}
+					{loginBusy ? 'Logging in…' : 'Log in'}
 				</button>
 			</form>
 		</div>
 	{:else}
 		<div class="actions stagger">
 			<section class="card action-card">
-				<h2>{isEnglish ? 'FIFA Rankings' : 'FIFA-rangliste'}</h2>
+				<h2>FIFA Rankings</h2>
 				<p class="muted">
-					{isEnglish
-						? 'Re-apply the FIFA rankings embedded in this build to the database. Run this after deploying a new build with updated rankings.'
-						: 'Bruk FIFA-rankingane frå dette bygget på databasen på nytt. Køyr dette etter å ha distribuert eit nytt bygg med oppdaterte rangeringar.'}
+					Re-apply the FIFA rankings embedded in this build to the database. Run this after deploying a new build with updated rankings.
 				</p>
 				{#if rankingsMsg}<p class="msg" class:ok={rankingsTone === 'ok'} class:error={rankingsTone === 'error'}>{rankingsMsg}</p>{/if}
 				<button onclick={refreshRankings} disabled={rankingsBusy} class="btn-primary">
-					{rankingsBusy ? (isEnglish ? 'Refreshing…' : 'Oppdaterer…') : (isEnglish ? 'Refresh rankings' : 'Oppdater rangeringar')}
+					{rankingsBusy ? 'Refreshing…' : 'Refresh rankings'}
 				</button>
 			</section>
 
 			<section class="card action-card">
-				<h2>{isEnglish ? 'Sync results' : 'Synkroniser resultat'}</h2>
+				<h2>Sync results</h2>
 				<p class="muted">
-					{isEnglish
-						? 'Force an immediate results sync from the configured provider (API-Football or openfootball).'
-						: 'Tving fram ein umiddelbar resultatsynkronisering frå den konfigurerte leverandøren.'}
+					Force an immediate results sync from the configured provider (API-Football or openfootball).
 				</p>
 				{#if syncMsg}<p class="msg" class:ok={syncTone === 'ok'} class:error={syncTone === 'error'}>{syncMsg}</p>{/if}
 				<button onclick={syncResults} disabled={syncBusy} class="btn-primary">
-					{syncBusy ? (isEnglish ? 'Syncing…' : 'Synkroniserer…') : (isEnglish ? 'Sync now' : 'Synkroniser no')}
+					{syncBusy ? 'Syncing…' : 'Sync now'}
 				</button>
 			</section>
 		</div>
 
 		<button onclick={logout} class="btn-ghost logout">
-			{isEnglish ? 'Log out' : 'Logg ut'}
+			Log out
 		</button>
 	{/if}
 </div>

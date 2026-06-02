@@ -3,7 +3,6 @@
 	import { homeIntro } from '$lib/homeIntro.svelte';
 	import { goto } from '$app/navigation';
 	import Avatar from '$lib/components/Avatar.svelte';
-	import { language } from '$lib/language.svelte';
 	import { strings } from '$lib/strings';
 	import { api, type PlayerStats } from '$lib/api';
 	import { onMount } from 'svelte';
@@ -25,9 +24,8 @@
 	let deleteBusy = $state(false);
 	let deleteError = $state('');
 	let introReset = $state(false);
-	const t = $derived(strings[language.resolved]);
-	const isEnglish = $derived(language.isEnglish);
-	const introCopy = $derived(strings[language.resolved].introCard);
+	const t = strings;
+	const introCopy = strings.introCard;
 
 	// Player Card stats (own profile only).
 	let stats = $state<PlayerStats | null>(null);
@@ -59,7 +57,7 @@
 		} catch (err: unknown) {
 			resetError =
 				(err as { message?: string })?.message ??
-				(isEnglish ? 'Could not send reset link.' : 'Kunne ikkje sende tilbakestillingslenke.');
+				'Could not send reset link.';
 		} finally {
 			resetBusy = false;
 		}
@@ -77,11 +75,11 @@
 		const file = (e.target as HTMLInputElement).files?.[0];
 		if (!file) return;
 		if (!file.type.startsWith('image/')) {
-			error = isEnglish ? 'Choose an image file.' : 'Vel ei bildefil.';
+			error = 'Choose an image file.';
 			return;
 		}
 		if (file.size > MAX_AVATAR_BYTES) {
-			error = isEnglish ? 'Image must be 5 MB or smaller.' : 'Bildet må vere 5 MB eller mindre.';
+			error = 'Image must be 5 MB or smaller.';
 			return;
 		}
 		error = '';
@@ -96,9 +94,7 @@
 		saved = false;
 		const trimmed = name.trim();
 		if (trimmed.length < 1 || trimmed.length > 48) {
-			error = isEnglish
-				? 'Display name must be between 1 and 48 characters.'
-				: 'Visingsnamnet må vere mellom 1 og 48 teikn.';
+			error = 'Display name must be between 1 and 48 characters.';
 			return;
 		}
 		busy = true;
@@ -111,7 +107,7 @@
 		} catch (err: unknown) {
 			error =
 				(err as { message?: string })?.message ??
-				(isEnglish ? 'Could not save changes.' : 'Kunne ikkje lagre endringane.');
+				'Could not save changes.';
 		} finally {
 			busy = false;
 		}
@@ -120,15 +116,11 @@
 	async function destroyAccount() {
 		deleteError = '';
 		const confirmWord = deletePhrase.trim().toUpperCase();
-		if (confirmWord !== 'DELETE' && confirmWord !== 'SLETT') {
-			deleteError = language.isEnglish
-				? 'Type DELETE to confirm account removal.'
-				: 'Skriv DELETE eller SLETT for å stadfeste kontosletting.';
+		if (confirmWord !== 'DELETE') {
+			deleteError = 'Type DELETE to confirm account removal.';
 			return;
 		}
-		if (!confirm(isEnglish
-			? 'Do you really want to delete your account? Private leagues you own will also be deleted.'
-			: 'Vil du verkeleg slette kontoen din? Private ligaer du eig, blir også sletta.')) {
+		if (!confirm('Do you really want to delete your account? Private leagues you own will also be deleted.')) {
 			return;
 		}
 		deleteBusy = true;
@@ -138,7 +130,7 @@
 		} catch (err: unknown) {
 			deleteError =
 				(err as { message?: string })?.message ??
-				(isEnglish ? 'Could not delete account.' : 'Kunne ikkje slette kontoen.');
+				'Could not delete account.';
 		} finally {
 			deleteBusy = false;
 		}
@@ -152,7 +144,7 @@
 
 <div class="settings">
 	<h1>{t.chrome.settings}</h1>
-	<p class="muted">{isEnglish ? 'Edit how you appear to friends.' : 'Endre korleis du visest for vener.'}</p>
+	<p class="muted">Edit how you appear to friends.</p>
 
 	<section class="player-card" aria-labelledby="player-card-title">
 		<div class="pc-topline">
@@ -205,7 +197,7 @@
 				</div>
 				<div class="pc-stat">
 					<div class="pc-stat-value">{stats.tipsScored}</div>
-					<div class="pc-stat-label">{isEnglish ? 'Scored tips' : 'Scora tips'}</div>
+					<div class="pc-stat-label">Scored tips</div>
 				</div>
 			</div>
 
@@ -217,7 +209,7 @@
 					</div>
 					<div class="pc-miss-sub">
 						{t.playerCard.largestMissSub} {stats.largestMiss.tipHome}–{stats.largestMiss.tipAway}
-						· {isEnglish ? 'gap' : 'avvik'} {stats.largestMiss.gdDev}
+						· gap {stats.largestMiss.gdDev}
 					</div>
 				{:else}
 					<div class="pc-miss-kicker">{t.playerCard.largestMiss}</div>
@@ -241,9 +233,9 @@
 					onclick={() => fileInput.click()}
 					disabled={busy}
 				>
-					{isEnglish ? 'Change photo' : 'Byt bilde'}
+					Change photo
 				</button>
-				<p class="muted hint">{isEnglish ? 'PNG or JPG, up to 5 MB.' : 'PNG eller JPG, opptil 5 MB.'}</p>
+				<p class="muted hint">PNG or JPG, up to 5 MB.</p>
 			</div>
 			<input
 				bind:this={fileInput}
@@ -255,7 +247,7 @@
 		</div>
 
 		<div class="field">
-			<label for="dn">{isEnglish ? 'Display name' : 'Visingsnamn'}</label>
+			<label for="dn">Display name</label>
 			<input
 				id="dn"
 				class="input"
@@ -267,9 +259,9 @@
 		</div>
 
 		{#if error}<p class="error">{error}</p>{/if}
-		{#if saved}<p class="ok">{isEnglish ? 'Saved.' : 'Lagra.'}</p>{/if}
+		{#if saved}<p class="ok">Saved.</p>{/if}
 
-		<button class="btn" disabled={busy}>{busy ? (isEnglish ? 'Saving…' : 'Lagrar…') : (isEnglish ? 'Save changes' : 'Lagre endringar')}</button>
+		<button class="btn" disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</button>
 	</form>
 
 	<section class="card intro-pref-card">
@@ -291,19 +283,14 @@
 	</section>
 
 	<section class="card">
-		<h3>{isEnglish ? 'Password' : 'Passord'}</h3>
+		<h3>Password</h3>
 		<p class="muted small">
-			{#if isEnglish}
-				We will send a reset link to <strong>{auth.user?.email ?? ''}</strong>.
-				Use it to choose a new password.
-			{:else}
-				Vi sender ei tilbakestillingslenke til <strong>{auth.user?.email ?? ''}</strong>.
-				Bruk henne til å velje nytt passord.
-			{/if}
+			We will send a reset link to <strong>{auth.user?.email ?? ''}</strong>.
+			Use it to choose a new password.
 		</p>
 		{#if resetError}<p class="error">{resetError}</p>{/if}
 		{#if resetSent}
-			<p class="ok">{isEnglish ? 'Reset link sent - check your inbox.' : 'Tilbakestillingslenke sendt - sjekk innboksen.'}</p>
+			<p class="ok">Reset link sent - check your inbox.</p>
 		{/if}
 		<button
 			type="button"
@@ -312,25 +299,19 @@
 			disabled={resetBusy || resetSent}
 		>
 			{resetBusy
-				? isEnglish ? 'Sending…' : 'Sender…'
-				: resetSent ? (isEnglish ? 'Sent' : 'Sendt') : (isEnglish ? 'Send reset link' : 'Send tilbakestillingslenke')}
+				? 'Sending…'
+				: resetSent ? 'Sent' : 'Send reset link'}
 		</button>
 	</section>
 
 	<section class="card danger-zone">
-		<h3>{isEnglish ? 'Delete account' : 'Slett konto'}</h3>
+		<h3>Delete account</h3>
 		<p class="muted small danger-copy">
-			{isEnglish
-				? 'This permanently deletes your account. Tips, Forecast, memberships, chat activity and private leagues you own will also be removed.'
-				: 'Dette slettar kontoen din permanent. Kamptips, VM-tips, medlemskap, chataktivitet og private ligaer du eig, blir også fjerna.'}
+			This permanently deletes your account. Tips, Forecast, memberships, chat activity and private leagues you own will also be removed.
 		</p>
 		<div class="field">
 			<label for="delete-confirm">
-				{#if language.isEnglish}
-					Type <strong>DELETE</strong> to confirm
-				{:else}
-					Skriv <strong>DELETE</strong> eller <strong>SLETT</strong> for å stadfeste
-				{/if}
+				Type <strong>DELETE</strong> to confirm
 			</label>
 			<input
 				id="delete-confirm"
@@ -348,11 +329,11 @@
 			onclick={destroyAccount}
 			disabled={deleteBusy}
 		>
-			{deleteBusy ? (isEnglish ? 'Deleting…' : 'Slettar…') : (isEnglish ? 'Delete my account' : 'Slett kontoen min')}
+			{deleteBusy ? 'Deleting…' : 'Delete my account'}
 		</button>
 	</section>
 
-	<p class="muted switch"><a href="/">{isEnglish ? 'Back' : 'Tilbake'}</a></p>
+	<p class="muted switch"><a href="/">Back</a></p>
 </div>
 
 <style>

@@ -3,7 +3,6 @@
 	import { goto } from '$app/navigation';
 	import { api } from '$lib/api';
 	import { auth } from '$lib/auth.svelte';
-	import { language } from '$lib/language.svelte';
 	import { strings } from '$lib/strings';
 
 	let code = $derived($page.params.code ?? '');
@@ -11,8 +10,7 @@
 	let phase = $state<'loading' | 'invite' | 'joining' | 'invalid' | 'error'>(
 		'loading'
 	);
-	const t = $derived(strings[language.resolved]);
-	const isEnglish = $derived(language.isEnglish);
+	const t = strings;
 
 	// Resolve the code once, then either auto-join (authed) or show the
 	// sign-in / create-account choice (carrying the invite code through).
@@ -51,30 +49,30 @@
 
 	<div class="card">
 		{#if phase === 'loading'}
-			<p class="muted">{isEnglish ? 'Checking invitation…' : 'Sjekkar invitasjonen…'}</p>
+			<p class="muted">Checking invitation…</p>
 		{:else if phase === 'joining'}
-			<p class="muted">{isEnglish ? 'Joining' : 'Blir med i'} <strong>{leagueName}</strong>…</p>
+			<p class="muted">Joining <strong>{leagueName}</strong>…</p>
 		{:else if phase === 'invite'}
-			<p class="kicker">{isEnglish ? 'You are invited' : 'Du er invitert'}</p>
+			<p class="kicker">You are invited</p>
 			<h2 class="lname">{leagueName}</h2>
 			<p class="muted">
-				{isEnglish ? 'Log in or create an account to join this league.' : 'Logg inn eller opprett konto for å bli med i denne ligaen.'}
+				Log in or create an account to join this league.
 			</p>
 			<a class="btn" href={`/register?invite=${encodeURIComponent(code)}`}>
-				{isEnglish ? 'Create account' : 'Opprett konto'}
+				Create account
 			</a>
 			<a
 				class="btn secondary"
 				href={`/login?invite=${encodeURIComponent(code)}`}
 			>
-				{isEnglish ? 'Log in' : 'Logg inn'}
+				Log in
 			</a>
 		{:else if phase === 'error'}
-			<p class="error">{isEnglish ? 'Could not join the league. Try again.' : 'Kunne ikkje bli med i ligaen. Prøv igjen.'}</p>
-			<a class="btn secondary" href="/leagues">{isEnglish ? 'Go to leagues' : 'Gå til ligaer'}</a>
+			<p class="error">Could not join the league. Try again.</p>
+			<a class="btn secondary" href="/leagues">Go to leagues</a>
 		{:else}
-			<p class="error">{isEnglish ? 'This invite link is invalid or expired.' : 'Invitasjonslenka er ugyldig eller utløpt.'}</p>
-			<a class="btn secondary" href="/">{isEnglish ? 'Go to home' : 'Gå til heim'}</a>
+			<p class="error">This invite link is invalid or expired.</p>
+			<a class="btn secondary" href="/">Go to home</a>
 		{/if}
 	</div>
 </div>

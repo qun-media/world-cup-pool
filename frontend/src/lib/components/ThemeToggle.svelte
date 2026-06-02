@@ -1,12 +1,11 @@
 <script lang="ts">
 	import { Sun, Moon } from '@lucide/svelte';
 	import { theme } from '$lib/theme.svelte';
-	import { language } from '$lib/language.svelte';
 	import { strings } from '$lib/strings';
 
 	let { compact = false }: { compact?: boolean } = $props();
 	const isDark = $derived(theme.resolved === 'dark');
-	const t = $derived(strings[language.resolved]);
+	const t = strings;
 </script>
 
 <button

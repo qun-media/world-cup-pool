@@ -1,5 +1,4 @@
 import type { LeagueSummary } from './api';
-import { isRuntimeEnglish, readRuntimeLocale } from './runtimeLanguage';
 import type { Match, Team } from './tips.svelte';
 import { teamDisplayName } from './teamNames';
 
@@ -27,11 +26,13 @@ export interface SearchResults {
 	leagues: SearchResult[];
 }
 
+const LOCALE = 'en-US';
+
 const emptyResults = (): SearchResults => ({ matches: [], teams: [], groups: [], leagues: [] });
 
 export function normalizeSearchText(value: string): string {
 	return value
-		.toLocaleLowerCase(readRuntimeLocale())
+		.toLocaleLowerCase(LOCALE)
 		.normalize('NFD')
 		.replace(/[\u0300-\u036f]/g, '')
 		.replace(/æ/g, 'ae')
@@ -44,18 +45,18 @@ export function normalizeSearchText(value: string): string {
 }
 
 function teamName(teams: Record<string, Team>, id: string, fallback: string): string {
-	return teamDisplayName(teams[id], fallback || (isRuntimeEnglish() ? 'Unknown team' : 'Ukjent lag'));
+	return teamDisplayName(teams[id], fallback || 'Unknown team');
 }
 
 function matchStageLabel(match: Match): string {
 	if (match.stage === 'group') {
-		return `${isRuntimeEnglish() ? 'Group' : 'Gruppe'} ${match.groupLetter} · ${match.roundLabel}`;
+		return `Group ${match.groupLetter} · ${match.roundLabel}`;
 	}
 	return match.roundLabel || match.stage;
 }
 
 function matchTimeLabel(iso: string): string {
-	return new Date(iso).toLocaleString(readRuntimeLocale(), {
+	return new Date(iso).toLocaleString(LOCALE, {
 		weekday: 'short',
 		day: 'numeric',
 		month: 'short',
@@ -66,7 +67,7 @@ function matchTimeLabel(iso: string): string {
 }
 
 function localeSort(a: string, b: string): number {
-	return a.localeCompare(b, readRuntimeLocale());
+	return a.localeCompare(b, LOCALE);
 }
 
 function buildGroupResults(matches: Match[], teams: Record<string, Team>): SearchResult[] {
@@ -90,23 +91,16 @@ function buildGroupResults(matches: Match[], teams: Record<string, Team>): Searc
 				.filter(Boolean)
 				.sort(localeSort);
 			const teamSummary = teamsInGroup.slice(0, 4).join(', ');
-			const label = isRuntimeEnglish() ? 'Group' : 'Gruppe';
-			const matchLabel = isRuntimeEnglish()
-				? group.matches.length === 1
-					? 'match'
-					: 'matches'
-				: group.matches.length === 1
-					? 'kamp'
-					: 'kampar';
+			const matchLabel = group.matches.length === 1 ? 'match' : 'matches';
 			return {
 				id: letter,
 				group: 'groups' as const,
-				title: `${label} ${letter}`,
+				title: `Group ${letter}`,
 				subtitle: `${group.matches.length} ${matchLabel}${
 					teamSummary ? ` · ${teamSummary}` : ''
 				}`,
 				href: `/tips?group=${encodeURIComponent(letter)}`,
-				keywords: [`group ${letter}`, `gruppe ${letter}`, letter, ...teamsInGroup].join(' ')
+				keywords: [`group ${letter}`, letter, ...teamsInGroup].join(' ')
 			};
 		});
 }
@@ -129,16 +123,12 @@ export function buildSearchIndex({ matches, teams, leagues }: SearchSources): Se
 			};
 		}),
 		teams: Object.values(teams)
-			.sort((a, b) => teamDisplayName(a).localeCompare(teamDisplayName(b), readRuntimeLocale()))
+			.sort((a, b) => teamDisplayName(a).localeCompare(teamDisplayName(b), LOCALE))
 			.map((team) => ({
 				id: team.id,
 				group: 'teams',
 				title: teamDisplayName(team),
-				subtitle: team.fifaCode
-					? `${isRuntimeEnglish() ? 'Team' : 'Lag'} · ${team.fifaCode}`
-					: isRuntimeEnglish()
-						? 'Team'
-						: 'Lag',
+				subtitle: team.fifaCode ? `Team · ${team.fifaCode}` : 'Team',
 				href: `/tips?team=${encodeURIComponent(team.id)}`,
 				keywords: [team.name, team.fifaCode, team.iso2].filter(Boolean).join(' ')
 			})),
@@ -147,16 +137,12 @@ export function buildSearchIndex({ matches, teams, leagues }: SearchSources): Se
 			id: league.id,
 			group: 'leagues',
 			title: league.name,
-			subtitle: `${league.members} ${
-				isRuntimeEnglish()
-					? league.members === 1 ? 'member' : 'members'
-					: league.members === 1 ? 'medlem' : 'medlemer'
-			} · ${
+			subtitle: `${league.members} ${league.members === 1 ? 'member' : 'members'} · ${
 				league.inviteCode === 'GLOBAL'
 					? 'Global'
 					: league.role === 'owner'
-						? isRuntimeEnglish() ? 'Owner' : 'Eigar'
-						: isRuntimeEnglish() ? 'Member' : 'Medlem'
+						? 'Owner'
+						: 'Member'
 			}`,
 			href: `/leagues/${encodeURIComponent(league.id)}`,
 			keywords: [league.name, league.inviteCode, league.role].filter(Boolean).join(' ')
@@ -180,7 +166,7 @@ function searchGroup(items: SearchResult[], query: string, limit: number): Searc
 	return items
 		.map((item) => ({ item, score: scoreResult(item, query) }))
 		.filter(({ score }) => Number.isFinite(score))
-		.sort((a, b) => a.score - b.score || a.item.title.localeCompare(b.item.title, readRuntimeLocale()))
+		.sort((a, b) => a.score - b.score || a.item.title.localeCompare(b.item.title, LOCALE))
 		.slice(0, limit)
 		.map(({ item }) => item);
 }

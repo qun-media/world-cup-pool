@@ -12,15 +12,13 @@
 	import InfoButton from '$lib/components/InfoButton.svelte';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import { serverClock } from '$lib/serverclock.svelte';
-	import { language } from '$lib/language.svelte';
 	import { tipsStore } from '$lib/tips.svelte';
 	import { forecastStore as fs } from '$lib/forecast.svelte';
 
 	let { children } = $props();
 
-	// Keep the server clock fresh so long-running sessions lock tips correctly.
 	$effect(() => {
-		document.documentElement.lang = language.resolved === 'nn' ? 'nn' : 'en';
+		document.documentElement.lang = 'en';
 	});
 
 	$effect(() => {

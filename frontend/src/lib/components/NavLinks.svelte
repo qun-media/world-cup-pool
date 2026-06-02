@@ -3,7 +3,6 @@
 	import { onMount } from 'svelte';
 	import { auth } from '$lib/auth.svelte';
 	import { leagueInvitations } from '$lib/leagueInvitations.svelte';
-	import { language } from '$lib/language.svelte';
 	import { navItems, isActive } from '$lib/nav';
 	import { strings } from '$lib/strings';
 	import { tipsStore, isLocked, teamsResolved } from '$lib/tips.svelte';
@@ -12,7 +11,7 @@
 
 	let { variant = 'tab' as 'tab' | 'rail' } = $props();
 	let path = $derived($page.url.pathname);
-	const t = $derived(strings[language.resolved]);
+	const t = strings;
 
 	let now = $derived(serverClock.now());
 

@@ -7,7 +7,6 @@
 	import { serverClock } from '$lib/serverclock.svelte';
 	import { searchNav } from '$lib/searchNav.svelte';
 	import { stageName, stageOrder } from '$lib/stageLabels';
-	import { language } from '$lib/language.svelte';
 	import { LocateFixed } from '@lucide/svelte';
 	import { tick } from 'svelte';
 
@@ -41,7 +40,6 @@
 		);
 	});
 	let lastSearchJump = '';
-	const isEnglish = $derived(language.isEnglish);
 
 	async function selectTab(newTab: Tab) {
 		if ($page.url.search) {
@@ -84,7 +82,7 @@
 	let nextMissingMatch = $derived(missingOpenMatches[0]);
 
 	function deadlineLabel(iso: string) {
-		return new Date(iso).toLocaleString(language.locale, {
+		return new Date(iso).toLocaleString('en-US', {
 			weekday: 'short',
 			day: 'numeric',
 			month: 'short',
@@ -140,7 +138,7 @@
 				.sort()
 				.map((letter) => ({
 					id: `section-group-${letter}`,
-					label: isEnglish ? `Group ${letter}` : `Gruppe ${letter}`,
+					label: `Group ${letter}`,
 					matches: byGroup[letter].sort(byKickoff)
 				}));
 		}
@@ -157,7 +155,7 @@
 		}
 		return Object.entries(
 			filtered.reduce<Record<string, Match[]>>((acc, m) => {
-				const d = new Date(m.kickoff).toLocaleDateString(language.locale, {
+				const d = new Date(m.kickoff).toLocaleDateString('en-US', {
 					weekday: 'long',
 					day: 'numeric',
 					month: 'long'
@@ -251,23 +249,19 @@
 </script>
 
 <div class="stickyhead" use:collapseOnScroll>
-	<p class="kicker">{isEnglish ? 'Match tips' : 'Kamptips'}</p>
+	<p class="kicker">Match tips</p>
 	<div class="sh-expand">
 		<div class="sh-inner">
-			<h1>{isEnglish ? 'Match tips' : 'Kamptips'}</h1>
+			<h1>Match tips</h1>
 			<p class="muted desc">
-				{isEnglish
-					? 'Pick the result for every match. You can change it until kickoff.'
-					: 'Tipp resultatet for kvar kamp. Du kan endre fram til avspark.'}
+				Pick the result for every match. You can change it until kickoff.
 			</p>
 			{#if tipsStore.loaded}
 				<p class="muted statusline">
 					{#if missingOpenMatches.length > 0}
-						{isEnglish
-							? `${missingOpenMatches.length} open match${missingOpenMatches.length === 1 ? '' : 'es'} missing · next deadline ${deadlineLabel(nextMissingMatch.kickoff)}`
-							: `${missingOpenMatches.length} open ${missingOpenMatches.length === 1 ? 'kamp' : 'kampar'} manglar · neste frist ${deadlineLabel(nextMissingMatch.kickoff)}`}
+						{`${missingOpenMatches.length} open match${missingOpenMatches.length === 1 ? '' : 'es'} missing · next deadline ${deadlineLabel(nextMissingMatch.kickoff)}`}
 					{:else}
-						{isEnglish ? 'All open matches are tipped.' : 'Alle opne kampar er tippa.'}
+						All open matches are tipped.
 					{/if}
 				</p>
 			{/if}
@@ -275,20 +269,20 @@
 	</div>
 	<div class="tabs">
 		<button class:active={tab === 'missing'} onclick={() => selectTab('missing')}
-			>{isEnglish ? 'Missing' : 'Manglar'}</button
+			>Missing</button
 		>
-		<button class:active={tab === 'all'} onclick={() => selectTab('all')}>{isEnglish ? 'All' : 'Alle'}</button>
+		<button class:active={tab === 'all'} onclick={() => selectTab('all')}>All</button>
 		<button class:active={tab === 'group'} onclick={() => selectTab('group')}
-			>{isEnglish ? 'Groups' : 'Grupper'}</button
+			>Groups</button
 		>
 		<button class:active={tab === 'ko'} onclick={() => selectTab('ko')}
-			>{isEnglish ? 'Knockout' : 'Sluttspel'}</button
+			>Knockout</button
 		>
 	</div>
 </div>
 
 {#if !tipsStore.loaded}
-		<p class="muted">{isEnglish ? 'Loading matches…' : 'Lastar kampar…'}</p>
+		<p class="muted">Loading matches…</p>
 {:else if filtered.length === 0}
 	<div class="card empty" style="text-align: center; padding: 2.5rem 1rem;">
 		<span style="display:block; margin-bottom:1rem; opacity:0.8; color:var(--muted);">
@@ -304,18 +298,18 @@
 		</span>
 		<h3>
 			{tab === 'missing'
-				? isEnglish ? 'No missing match tips' : 'Ingen kamptips manglar'
-				: isEnglish ? 'Nothing here.' : 'Ingenting her.'}
+				? 'No missing match tips'
+				: 'Nothing here.'}
 		</h3>
 		<p class="muted">
 			{tab === 'missing'
-				? isEnglish ? 'All open matches that can be tipped right now are filled in.' : 'Alle opne kampar som kan tippast no, er fylt inn.'
-				: isEnglish ? 'Try another tab.' : 'Prøv ei anna fane.'}
+				? 'All open matches that can be tipped right now are filled in.'
+				: 'Try another tab.'}
 		</p>
 		{#if tab === 'missing'}
 			<div class="empty-actions">
 				<button class="empty-link" onclick={() => selectTab('all')}>
-					{isEnglish ? 'View all matches' : 'Sjå alle kampane'}
+					View all matches
 				</button>
 			</div>
 		{/if}
@@ -330,14 +324,14 @@
 				<div
 					class="now-divider-wrap"
 					role="separator"
-					aria-label={isEnglish ? 'Where the tournament is now' : 'Her er vi no'}
+					aria-label="Where the tournament is now"
 				>
 					<div class="now-divider">
 						<span class="line"></span>
-						<span class="badge"><LocateFixed size={14} /> {isEnglish ? 'Where we are now' : 'Her er vi no'}</span>
+						<span class="badge"><LocateFixed size={14} /> Where we are now</span>
 						<span class="line"></span>
 					</div>
-					<p class="now-hint">{isEnglish ? 'Upcoming matches below' : 'Komande kampar under'}</p>
+					<p class="now-hint">Upcoming matches below</p>
 				</div>
 			{/if}
 			<div
@@ -354,8 +348,8 @@
 {/if}
 
 {#if tipsStore.loaded && nowId}
-	<button class="fab" onclick={goNow} aria-label={isEnglish ? 'Scroll to next match' : 'Rull til neste kamp'}>
-		<LocateFixed size={18} /> {isEnglish ? 'Now' : 'No'}
+	<button class="fab" onclick={goNow} aria-label="Scroll to next match">
+		<LocateFixed size={18} /> Now
 	</button>
 {/if}
 

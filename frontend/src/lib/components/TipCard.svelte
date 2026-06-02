@@ -12,7 +12,6 @@
 	import Stepper from './Stepper.svelte';
 	import { teamDisplayName } from '$lib/teamNames';
 	import { Lock, ChevronDown, Check, Users } from '@lucide/svelte';
-	import { language } from '$lib/language.svelte';
 	import { strings } from '$lib/strings';
 	import OddsBadge from './OddsBadge.svelte';
 	import { api, type CrowdDistribution } from '$lib/api';
@@ -52,7 +51,7 @@
 	let savedOk = $state(false);
 	let saveToastRun = $state(0);
 	let saveToastTimer: ReturnType<typeof setTimeout> | null = null;
-	const t = $derived(strings[language.resolved]);
+	const t = strings;
 
 	// Seed the editor from the saved tip whenever it changes.
 	$effect(() => {
@@ -91,7 +90,7 @@
 	);
 
 	const kickoff = $derived(
-		new Date(match.kickoff).toLocaleString(language.locale, {
+		new Date(match.kickoff).toLocaleString('en-US', {
 			weekday: 'short',
 			day: 'numeric',
 			month: 'short',
@@ -156,7 +155,7 @@
 		} catch (e: unknown) {
 			msg =
 				(e as { message?: string })?.message ??
-				(language.isEnglish ? 'Could not save tip.' : 'Kunne ikkje lagre tipset.');
+				'Could not save tip.';
 		} finally {
 			busy = false;
 		}
@@ -171,7 +170,7 @@
 		rows.sort((left, right) => {
 			if (left.isMe !== right.isMe) return left.isMe ? -1 : 1;
 			if (left.points !== right.points) return right.points - left.points;
-			return left.name.localeCompare(right.name, language.locale);
+			return left.name.localeCompare(right.name, 'en-US');
 		});
 		return rows;
 	});
@@ -378,8 +377,8 @@
 							<thead>
 								<tr>
 									<th></th>
-									<th class="ftip">{language.isEnglish ? 'Tip' : 'Tips'}</th>
-									<th class="fpts">{language.isEnglish ? 'Pts' : 'Poi'}</th>
+									<th class="ftip">Tip</th>
+									<th class="fpts">Pts</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -409,9 +408,9 @@
 							<div class="friends-actions">
 								<button class="btn secondary morefriends" onclick={() => (showAllFriends = !showAllFriends)}>
 									{#if showAllFriends}
-										{language.isEnglish ? 'Show fewer' : 'Vis færre'}
+										Show fewer
 									{:else}
-										{language.isEnglish ? `Show ${hiddenFriendsCount} more` : `Vis ${hiddenFriendsCount} fleire`}
+										Show {hiddenFriendsCount} more
 									{/if}
 								</button>
 							</div>
@@ -464,7 +463,7 @@
 				</div>
 
 				{#if ftTie}
-						<div class="phase">{language.isEnglish ? 'After extra time' : 'Etter ekstraomgangar'}</div>
+						<div class="phase">After extra time</div>
 					<div class="enter">
 						<Stepper bind:value={etH} min={ftH} />
 						<span class="sep">:</span>
@@ -473,7 +472,7 @@
 				{/if}
 
 				{#if etTie}
-						<div class="phase">{language.isEnglish ? 'Penalties - who goes through?' : 'Straffar - kven går vidare?'}</div>
+						<div class="phase">Penalties - who goes through?</div>
 					<div class="pens">
 						<button
 							class="pen"

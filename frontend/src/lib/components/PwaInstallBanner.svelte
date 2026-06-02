@@ -1,13 +1,12 @@
 <script lang="ts">
 	import { pwa } from '$lib/pwa.svelte';
-	import { language } from '$lib/language.svelte';
 	import { strings } from '$lib/strings';
 	import { X, Share } from '@lucide/svelte';
-	const t = $derived(strings[language.resolved]);
+	const t = strings;
 </script>
 
 {#if pwa.bannerOpen}
-	<div class="banner" role="region" aria-label="Installer app">
+	<div class="banner" role="region" aria-label="Install app">
 		<div class="inner">
 			<img class="appicon" src="/favicon.svg" alt="" />
 			<div class="msg">

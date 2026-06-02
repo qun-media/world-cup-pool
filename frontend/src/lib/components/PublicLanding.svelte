@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { language } from '$lib/language.svelte';
 	import Flag from '$lib/components/Flag.svelte';
 	import Logo from '$lib/components/Logo.svelte';
 	import { fly } from 'svelte/transition';
@@ -13,13 +12,8 @@
 	} from '@lucide/svelte';
 
 	let targetIndex = $state(0);
-	const isEnglish = $derived(language.isEnglish);
-	const landingTargets = $derived(
-		isEnglish ? ['coworker', 'friend'] : ['kollegaen', 'kompisen']
-	);
-	const landingVerb = $derived(
-		isEnglish ? 'Log in and beat your' : 'Logg inn og vinn over'
-	);
+	const landingTargets = ['coworker', 'friend'];
+	const landingVerb = 'Log in and beat your';
 	const landingTarget = $derived(
 		landingTargets[targetIndex] ?? landingTargets[0] ?? ''
 	);
@@ -43,9 +37,7 @@
 	<title>WC Pool</title>
 	<meta
 		name="description"
-		content={isEnglish
-			? 'Join friends for World Cup match tips, leagues, points and chat.'
-			: 'Bli med vener med VM-tips, ligaer, poeng og chat.'}
+		content="Join friends for World Cup match tips, leagues, points and chat."
 	/>
 </svelte:head>
 
@@ -53,11 +45,11 @@
 	<div class="landing-shell">
 		<section class="landing-hero">
 			<div class="hero-copy">
-				<Logo variant="hero" tagline={isEnglish ? 'Forecast with friends' : 'Kamptips og VM-tips med vener'} />
+				<Logo variant="hero" tagline="Forecast with friends" />
 				<h1 id="landing-title" class="landing-headline">
 					<span class="landing-verb">{landingVerb}</span>
 					<span class="landing-target-slot">
-						{#key `${language.resolved}-${landingTarget}`}
+						{#key `en-${landingTarget}`}
 							<span
 								class="landing-target"
 								in:fly={{ y: 18, duration: 220, opacity: 0.15 }}
@@ -69,15 +61,13 @@
 					</span>
 				</h1>
 				<p class="lead">
-					{isEnglish
-						? 'Tip every match, build your World Cup bracket, and follow the league drama as the points land.'
-						: 'Tipp kvar kamp, bygg VM-braketten din, og følg ligadramaet når poenga kjem inn.'}
+					Tip every match, build your World Cup bracket, and follow the league drama as the points land.
 				</p>
 
-				<div class="hero-actions" aria-label={isEnglish ? 'Sign in actions' : 'Innloggingsval'}>
+				<div class="hero-actions" aria-label="Sign in actions">
 					<div class="secondary-actions">
-						<a class="btn secondary" href="/login">{isEnglish ? 'Use email' : 'Bruk e-post'}</a>
-						<a class="btn ghost" href="/register">{isEnglish ? 'Create account' : 'Opprett konto'}</a>
+						<a class="btn secondary" href="/login">Use email</a>
+						<a class="btn ghost" href="/register">Create account</a>
 					</div>
 				</div>
 			</div>
@@ -85,15 +75,15 @@
 
 		<section class="showcase" aria-labelledby="showcase-title">
 			<div class="section-head">
-				<p class="kicker">{isEnglish ? 'Inside the app' : 'Inne i appen'}</p>
-				<h2 id="showcase-title">{isEnglish ? 'Everything feels like match day.' : 'Alt kjennest som kampdag.'}</h2>
+				<p class="kicker">Inside the app</p>
+				<h2 id="showcase-title">Everything feels like match day.</h2>
 			</div>
 
 			<div class="mock-grid">
 				<article class="card mock-card table-card">
-					<div class="mock-head"><Trophy size={18} /><h3>{isEnglish ? 'Group table' : 'Gruppetabell'}</h3></div>
+					<div class="mock-head"><Trophy size={18} /><h3>Group table</h3></div>
 					<table>
-						<thead><tr><th>#</th><th>{isEnglish ? 'Team' : 'Lag'}</th><th>P</th><th>GD</th><th>Pts</th></tr></thead>
+						<thead><tr><th>#</th><th>Team</th><th>P</th><th>GD</th><th>Pts</th></tr></thead>
 						<tbody>
 							<tr><td>1</td><td><span class="team-cell"><Flag iso2="nl" code="NED" size={17} /> Netherlands</span></td><td>3</td><td>+5</td><td>7</td></tr>
 							<tr><td>2</td><td><span class="team-cell"><Flag iso2="se" code="SWE" size={17} /> Sweden</span></td><td>3</td><td>+1</td><td>5</td></tr>
@@ -104,31 +94,31 @@
 				</article>
 
 				<article class="card mock-card score-card">
-					<div class="mock-head"><ShieldCheck size={18} /><h3>{isEnglish ? 'Points system' : 'Poengsystem'}</h3></div>
-					<div class="score-total"><strong class="digits">6</strong><span>{isEnglish ? 'max per match' : 'maks per kamp'}</span></div>
+					<div class="mock-head"><ShieldCheck size={18} /><h3>Points system</h3></div>
+					<div class="score-total"><strong class="digits">6</strong><span>max per match</span></div>
 					<ul>
-						<li><span>{isEnglish ? 'Correct outcome' : 'Rett utfall'}</span><b>3 p</b></li>
-						<li><span>{isEnglish ? 'Exact score' : 'Eksakt resultat'}</span><b>+1 p</b></li>
-						<li><span>{isEnglish ? 'Total goals' : 'Totalt mål'}</span><b>+1 p</b></li>
-						<li><span>{isEnglish ? 'Goal difference' : 'Målforskjell'}</span><b>+1 p</b></li>
+						<li><span>Correct outcome</span><b>3 p</b></li>
+						<li><span>Exact score</span><b>+1 p</b></li>
+						<li><span>Total goals</span><b>+1 p</b></li>
+						<li><span>Goal difference</span><b>+1 p</b></li>
 					</ul>
 				</article>
 
 				<article class="card mock-card chat-card">
-					<div class="mock-head"><MessageCircle size={18} /><h3>{isEnglish ? 'League chat' : 'Liga-chat'}</h3></div>
-					<div class="bubble theirs"><b>Anna</b><span>{isEnglish ? 'That 90th minute goal changed everything.' : 'Det målet på overtid snudde alt.'}</span></div>
-					<div class="bubble mine"><b>{isEnglish ? 'You' : 'Du'}</b><span>{isEnglish ? 'I had 2-1. Six points!' : 'Eg hadde 2-1. Seks poeng!'}</span></div>
-					<div class="chat-meta"><Users size={15} /> {isEnglish ? 'Private leagues, live reactions' : 'Private ligaer, levande reaksjonar'}</div>
+					<div class="mock-head"><MessageCircle size={18} /><h3>League chat</h3></div>
+					<div class="bubble theirs"><b>Anna</b><span>That 90th minute goal changed everything.</span></div>
+					<div class="bubble mine"><b>You</b><span>I had 2-1. Six points!</span></div>
+					<div class="chat-meta"><Users size={15} /> Private leagues, live reactions</div>
 				</article>
 			</div>
 		</section>
 
 		<section class="bottom-cta card">
 			<div>
-				<p class="kicker">{isEnglish ? 'Ready before kickoff' : 'Klar før avspark'}</p>
-				<h2>{isEnglish ? 'Make the first pick now.' : 'Legg inn første tips no.'}</h2>
+				<p class="kicker">Ready before kickoff</p>
+				<h2>Make the first pick now.</h2>
 			</div>
-			<a class="btn" href="/login"><Clock size={16} /> {isEnglish ? 'Log in' : 'Logg inn'} <ArrowRight size={16} /></a>
+			<a class="btn" href="/login"><Clock size={16} /> Log in <ArrowRight size={16} /></a>
 		</section>
 	</div>
 </section>

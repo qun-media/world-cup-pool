@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type { MatchOdds } from '$lib/tips.svelte';
-	import { language } from '$lib/language.svelte';
 	import { strings } from '$lib/strings';
 
 	let {
@@ -13,7 +12,7 @@
 		showDecimal?: boolean;
 	} = $props();
 
-	const t = $derived(strings[language.resolved].odds);
+	const t = strings.odds;
 
 	function pct(p: number): string {
 		return Math.round(p * 100) + '%';

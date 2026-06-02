@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { language } from '$lib/language.svelte';
 	import { strings } from '$lib/strings';
 
 	let {
@@ -8,7 +7,7 @@
 		tagline = ''
 	}: { compact?: boolean; variant?: 'default' | 'hero'; tagline?: string } =
 		$props();
-	const t = $derived(strings[language.resolved]);
+	const t = strings;
 </script>
 
 <a class="logo" class:compact class:hero={variant === 'hero'} href="/" aria-label={`WC Pool — ${t.nav.home.toLowerCase()}`}>

@@ -15,16 +15,14 @@
 		Trophy
 	} from '@lucide/svelte';
 	import { collapseOnScroll } from '$lib/actions';
-	import { language } from '$lib/language.svelte';
 	import { stageName as knockoutStageName } from '$lib/stageLabels';
 
 	let section = $state<'groups' | 'thirds' | 'bracket'>('groups');
 	let saveState = $state<'idle' | 'saving' | 'saved' | 'error'>('idle');
 	let err = $state('');
-	const isEnglish = $derived(language.isEnglish);
 
 	$effect(() => {
-		if (!fs.loaded) fs.load().catch((e) => (err = e?.message ?? (isEnglish ? 'Load failed' : 'Lasting feila')));
+		if (!fs.loaded) fs.load().catch((e) => (err = e?.message ?? 'Load failed'));
 	});
 
 	// Debounced autosave. The Forecast is a living prediction edited until
@@ -55,9 +53,7 @@
 				saveState = 'error';
 				err =
 					(e as { message?: string })?.message ??
-					(language.isEnglish
-						? 'Could not save — your changes were not saved.'
-						: 'Kunne ikkje lagre — endringane er ikkje lagra.');
+					'Could not save — your changes were not saved.';
 			}
 		}, 1000);
 		return () => clearTimeout(timer);
@@ -96,21 +92,19 @@
 </script>
 
 <div class="stickyhead" use:collapseOnScroll>
-	<p class="kicker">{isEnglish ? 'Whole tournament' : 'Heile turneringa'}</p>
+	<p class="kicker">Whole tournament</p>
 	<div class="sh-expand">
 		<div class="sh-inner">
-			<h1>{isEnglish ? 'Forecast' : 'VM-tips'}</h1>
+			<h1>Forecast</h1>
 			<p class="muted desc">
-				{isEnglish
-					? 'Your Forecast for groups, best thirds, and the road to the final.'
-					: 'VM-tipset ditt for grupper, beste trearar og vegen til finalen.'}
-				{#if fs.locked}<b>{isEnglish ? 'Locked.' : 'Låst.'}</b
-						>{:else}{isEnglish ? 'Locks at kickoff.' : 'Låsast ved avspark.'}{/if}
+				Your Forecast for groups, best thirds, and the road to the final.
+				{#if fs.locked}<b>Locked.</b
+						>{:else}Locks at kickoff.{/if}
 			</p>
 				{#if !fs.locked && fs.tournamentStart}
 					<DeadlineCountdown
 						deadline={fs.tournamentStart}
-						label={isEnglish ? 'Locks' : 'Låsast'}
+						label="Locks"
 						compact
 					/>
 				{/if}
@@ -118,9 +112,9 @@
 	</div>
 	{#if fs.loaded}
 		<div class="seg">
-			<button class:on={section === 'groups'} onclick={() => (section = 'groups')}>{isEnglish ? 'Groups' : 'Grupper'}</button>
-			<button class:on={section === 'thirds'} onclick={() => (section = 'thirds')}>{isEnglish ? 'Best thirds' : 'Beste trearar'}</button>
-			<button class:on={section === 'bracket'} onclick={() => (section = 'bracket')}>{isEnglish ? 'Knockout' : 'Sluttspel'}</button>
+			<button class:on={section === 'groups'} onclick={() => (section = 'groups')}>Groups</button>
+			<button class:on={section === 'thirds'} onclick={() => (section = 'thirds')}>Best thirds</button>
+			<button class:on={section === 'bracket'} onclick={() => (section = 'bracket')}>Knockout</button>
 		</div>
 	{/if}
 </div>
@@ -128,21 +122,19 @@
 {#if err}<p class="error">{err}</p>{/if}
 
 {#if !fs.loaded}
-	<p class="muted">{isEnglish ? 'Loading…' : 'Lastar…'}</p>
+	<p class="muted">Loading…</p>
 {:else}
 	{#if fs.locked}
-		<div class="card lockbar"><Lock size={16} /> {isEnglish ? 'The tournament has started - the Forecast is final.' : 'Turneringa har starta - VM-tipset er endeleg.'}</div>
+		<div class="card lockbar"><Lock size={16} /> The tournament has started - the Forecast is final.</div>
 	{/if}
 
 	{#if section === 'groups'}
 		<p class="muted small">
-			{isEnglish
-				? 'Rank each group from 1st to 4th. The top 2 advance; 3rd place can advance as a best third.'
-				: 'Ranger kvar gruppe frå 1. til 4. plass. Topp 2 går vidare; 3.-plassen kan gå vidare som beste trear.'}
+			Rank each group from 1st to 4th. The top 2 advance; 3rd place can advance as a best third.
 		</p>
 		{#each fs.groups as g (g.letter)}
 			<section class="card grp">
-				<h3>{isEnglish ? 'Group' : 'Gruppe'} {g.letter}</h3>
+				<h3>Group {g.letter}</h3>
 				{#each fs.groupOrder[g.letter] as id, i (id)}
 					{@const ao = fs.actualOrder(g.letter)}
 					{@const apos = ao ? ao.indexOf(id) + 1 : 0}
@@ -178,18 +170,18 @@
 						<span class="tag">
 							{#if state === 'ok'}<span class="ind ok"><Check size={15} /></span>
 							{:else if state === 'half'}
-								<span class="apos half">{isEnglish ? 'actual' : 'faktisk'} {ord(apos)}</span>
+								<span class="apos half">actual {ord(apos)}</span>
 								<span class="ind half"><CircleCheck size={15} /></span>
 							{:else if state === 'miss'}
-								<span class="apos">{isEnglish ? 'actual' : 'faktisk'} {ord(apos)}</span>
+								<span class="apos">actual {ord(apos)}</span>
 								<span class="ind no"><X size={15} /></span>
-								{:else if i < 2}<span class="pill ok">{isEnglish ? 'through' : 'vidare'}</span>
-								{:else if i === 2}<span class="pill">{isEnglish ? '3rd place' : '3.-plass'}</span>{/if}
+								{:else if i < 2}<span class="pill ok">through</span>
+								{:else if i === 2}<span class="pill">3rd place</span>{/if}
 						</span>
 						{#if !fs.locked}
 							<span class="ord">
-								<button aria-label={isEnglish ? 'Move up' : 'Flytt opp'} disabled={i === 0} onclick={() => { fs.move(g.letter, i, -1); vibrate(15); }}><ChevronUp size={16} /></button>
-								<button aria-label={isEnglish ? 'Move down' : 'Flytt ned'} disabled={i === 3} onclick={() => { fs.move(g.letter, i, 1); vibrate(15); }}><ChevronDown size={16} /></button>
+								<button aria-label="Move up" disabled={i === 0} onclick={() => { fs.move(g.letter, i, -1); vibrate(15); }}><ChevronUp size={16} /></button>
+								<button aria-label="Move down" disabled={i === 3} onclick={() => { fs.move(g.letter, i, 1); vibrate(15); }}><ChevronDown size={16} /></button>
 							</span>
 						{/if}
 					</div>
@@ -199,9 +191,7 @@
 	{:else if section === 'thirds'}
 		<div class="thead">
 			<p class="muted small">
-				{isEnglish
-					? 'Choose the 8 of 12 group thirds you think will advance. The teams come from your group rankings.'
-					: 'Vel dei 8 av 12 gruppetrearane du trur går vidare. Laga kjem frå grupperangeringa di.'}
+				Choose the 8 of 12 group thirds you think will advance. The teams come from your group rankings.
 			</p>
 			<span class="cnt" class:full={fs.chosenThirdLetters.length === 8}>
 				{fs.chosenThirdLetters.length} / 8
@@ -234,7 +224,7 @@
 		{#if champion}
 			<div class="card champ">
 				<Trophy size={20} />
-				<span class="lbl">{isEnglish ? 'Predicted winner' : 'Tippa vinnar'}</span>
+				<span class="lbl">Predicted winner</span>
 				<Flag
 					iso2={fs.team(champion)?.iso2 ?? ''}
 					code={fs.team(champion)?.fifaCode ?? ''}
@@ -287,13 +277,13 @@
 		<div class="savebar">
 			<span class="savestat" class:err={saveState === 'error'}>
 				{#if saveState === 'saving'}
-						{isEnglish ? 'Saving…' : 'Lagrar…'}
+						Saving…
 				{:else if saveState === 'error'}
-						{err || (isEnglish ? 'Save failed' : 'Lagring feila')}
+						{err || 'Save failed'}
 				{:else if saveState === 'saved'}
-						<Check size={15} /> {isEnglish ? 'Saved · changes are saved automatically' : 'Lagra · endringar blir lagra automatisk'}
+						<Check size={15} /> Saved · changes are saved automatically
 				{:else}
-						{isEnglish ? 'Changes are saved automatically' : 'Endringar blir lagra automatisk'}
+						Changes are saved automatically
 				{/if}
 			</span>
 		</div>

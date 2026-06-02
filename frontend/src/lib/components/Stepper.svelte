@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { Minus, Plus } from '@lucide/svelte';
-	import { language } from '$lib/language.svelte';
 
 	let {
 		value = $bindable(0),
@@ -15,8 +14,8 @@
 		if (n >= min && n <= max) value = n;
 	}
 
-	const decrementLabel = $derived(language.isEnglish ? 'Remove goal' : 'Trekk frå mål');
-	const incrementLabel = $derived(language.isEnglish ? 'Add goal' : 'Legg til mål');
+	const decrementLabel = 'Remove goal';
+	const incrementLabel = 'Add goal';
 </script>
 
 <div class="stepper" class:disabled>

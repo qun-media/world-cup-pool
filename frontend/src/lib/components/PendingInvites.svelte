@@ -4,7 +4,6 @@
 	import { Check, Mail, X } from '@lucide/svelte';
 	import { api, type LeagueInvite } from '$lib/api';
 	import { leagueInvitations } from '$lib/leagueInvitations.svelte';
-	import { language } from '$lib/language.svelte';
 	import Avatar from '$lib/components/Avatar.svelte';
 
 	let {
@@ -15,8 +14,7 @@
 
 	let busyId = $state('');
 	let error = $state('');
-	const isEnglish = $derived(language.isEnglish);
-	const locale = $derived(language.locale);
+	const locale = 'en-US';
 
 	let visibleInvites = $derived(leagueInvitations.pending);
 
@@ -44,7 +42,7 @@
 			leagueInvitations.remove(invite.id);
 			await goto(`/leagues/${result.league.id}`);
 		} catch {
-			error = isEnglish ? 'Could not accept the invite.' : 'Kunne ikkje godta invitasjonen.';
+			error = 'Could not accept the invite.';
 		} finally {
 			busyId = '';
 		}
@@ -57,7 +55,7 @@
 			await api.declineLeagueInvitation(invite.id);
 			leagueInvitations.remove(invite.id);
 		} catch {
-			error = isEnglish ? 'Could not decline the invite.' : 'Kunne ikkje avslå invitasjonen.';
+			error = 'Could not decline the invite.';
 		} finally {
 			busyId = '';
 		}
@@ -69,8 +67,8 @@
 		<div class="invite-title">
 			<span class="invite-icon"><Mail size={18} /></span>
 			<div>
-				<p class="kicker">{isEnglish ? 'League invite' : 'Ligainvitasjon'}</p>
-				<h2 id="pending-invites-title">{isEnglish ? 'Pending invites' : 'Ventande invitasjonar'}</h2>
+				<p class="kicker">League invite</p>
+				<h2 id="pending-invites-title">Pending invites</h2>
 			</div>
 		</div>
 
@@ -81,7 +79,7 @@
 					<div class="invite-main">
 						<b>{invite.leagueName}</b>
 						<span>
-							{isEnglish ? 'Invited by' : 'Invitert av'} {invite.invitedBy.name}
+							Invited by {invite.invitedBy.name}
 							{#if sentLabel(invite.created)} · {sentLabel(invite.created)}{/if}
 						</span>
 					</div>
@@ -91,14 +89,14 @@
 							disabled={!!busyId}
 							onclick={() => accept(invite)}
 						>
-							<Check size={16} /> {busyId === `${invite.id}:accept` ? (isEnglish ? 'Accepting...' : 'Godtek...') : (isEnglish ? 'Accept' : 'Godta')}
+							<Check size={16} /> {busyId === `${invite.id}:accept` ? 'Accepting...' : 'Accept'}
 						</button>
 						<button
 							class="btn secondary decline"
 							disabled={!!busyId}
 							onclick={() => decline(invite)}
 						>
-							<X size={16} /> {busyId === `${invite.id}:decline` ? (isEnglish ? 'Declining...' : 'Avslår...') : (isEnglish ? 'Decline' : 'Avslå')}
+							<X size={16} /> {busyId === `${invite.id}:decline` ? 'Declining...' : 'Decline'}
 						</button>
 					</div>
 				</article>

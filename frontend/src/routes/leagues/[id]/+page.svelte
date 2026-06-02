@@ -3,7 +3,6 @@
 	import { page } from '$app/stores';
 	import { api, type LeaderboardRow, type LeagueInvite, type LeagueInviteUser } from '$lib/api';
 	import { auth } from '$lib/auth.svelte';
-	import { language } from '$lib/language.svelte';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import LeagueChatCard from '$lib/components/LeagueChatCard.svelte';
 	import {
@@ -17,8 +16,6 @@
 		Search,
 		UserPlus
 	} from '@lucide/svelte';
-
-	const isEnglish = $derived(language.isEnglish);
 
 	interface Cfg {
 		match: {
@@ -37,22 +34,22 @@
 	}
 	let cfg = $state<Cfg | null>(null);
 
-	let tbLabel = $derived.by<Record<string, string>>(() => ({
-		points: isEnglish ? 'Total points' : 'Totalpoeng',
-		exactScores: isEnglish ? 'Most exact scores' : 'Flest eksakte resultat',
-		correctWinners: isEnglish ? 'Most correct winners' : 'Flest rette vinnarar',
-		goalDiffDeviation: isEnglish ? 'Smallest goal-difference error' : 'Minst målforskjell-feil',
-		fewestTips: isEnglish ? 'Fewest submitted tips' : 'Færrast leverte tips',
-		earliestEdit: isEnglish ? 'Earliest last edit (submitted first)' : 'Tidlegaste siste endring (levert først)'
-	}));
-	let roundLabel = $derived.by<Record<string, string>>(() => ({
-		R32: isEnglish ? 'Round of 32' : '32-delsfinale',
-		R16: isEnglish ? 'Round of 16' : 'Åttedelsfinale',
-		QF: isEnglish ? 'Quarter-final' : 'Kvartfinale',
-		SF: isEnglish ? 'Semi-final' : 'Semifinale',
-		FINAL: isEnglish ? 'Final' : 'Finale',
-		CHAMPION: isEnglish ? 'Winner' : 'Vinnar'
-	}));
+	const tbLabel: Record<string, string> = {
+		points: 'Total points',
+		exactScores: 'Most exact scores',
+		correctWinners: 'Most correct winners',
+		goalDiffDeviation: 'Smallest goal-difference error',
+		fewestTips: 'Fewest submitted tips',
+		earliestEdit: 'Earliest last edit (submitted first)'
+	};
+	const roundLabel: Record<string, string> = {
+		R32: 'Round of 32',
+		R16: 'Round of 16',
+		QF: 'Quarter-final',
+		SF: 'Semi-final',
+		FINAL: 'Final',
+		CHAMPION: 'Winner'
+	};
 
 	let revealed = $state(false);
 	let openRow = $state<string | null>(null);
@@ -104,7 +101,7 @@
 					void loadInviteManager(lid);
 				}
 			})
-			.catch(() => (error = isEnglish ? 'Could not load this league.' : 'Kunne ikkje laste ligaen.'))
+			.catch(() => (error = 'Could not load this league.'))
 			.finally(() => (loaded = true));
 	});
 
@@ -149,10 +146,8 @@
 	let copyTimer: ReturnType<typeof setTimeout>;
 	async function shareInvite() {
 		const url = new URL(`/join/${encodeURIComponent(invite)}`, window.location.origin).toString();
-		const title = isEnglish
-			? 'Join my World Cup prediction league on Midttunet!'
-			: 'Bli med i min tippekonkurranse for VM på Midttunet!';
-		const text = isEnglish ? 'Tap here to challenge me.' : 'Klikk her for å utfordre meg.';
+		const title = 'Join my World Cup prediction league on Midttunet!';
+		const text = 'Tap here to challenge me.';
 		try {
 			if (navigator.share) {
 				await navigator.share({ title, text, url });
@@ -176,7 +171,7 @@
 			await api.updateLeagueSettings(league.id, { hideForecast: next });
 			hideForecast = next;
 		} catch {
-			settingsError = isEnglish ? 'Could not save settings.' : 'Kunne ikkje lagre innstillingane.';
+			settingsError = 'Could not save settings.';
 		} finally {
 			settingsBusy = false;
 		}
@@ -190,7 +185,7 @@
 			await api.deleteLeague(league.id);
 			await goto('/leagues');
 		} catch {
-			deleteError = isEnglish ? 'Could not delete the league.' : 'Kunne ikkje slette ligaen.';
+			deleteError = 'Could not delete the league.';
 		} finally {
 			deleteBusy = false;
 		}
@@ -218,7 +213,7 @@
 			inviteCandidates = inviteCandidates.filter((candidate) => candidate.id !== user.id);
 			inviteQuery = '';
 		} catch {
-			inviteError = isEnglish ? 'Could not send invite.' : 'Kunne ikkje sende invitasjonen.';
+			inviteError = 'Could not send invite.';
 		} finally {
 			inviteSendBusy = '';
 		}
@@ -227,7 +222,7 @@
 	function inviteDate(iso: string) {
 		const date = new Date(iso);
 		if (!Number.isFinite(date.getTime())) return '';
-		return new Intl.DateTimeFormat(language.locale, {
+		return new Intl.DateTimeFormat('en-US', {
 			day: '2-digit',
 			month: 'short',
 			hour: '2-digit',
@@ -237,45 +232,45 @@
 	}
 </script>
 
-<a href="/leagues" class="muted back">← {isEnglish ? 'Leagues' : 'Ligaer'}</a>
+<a href="/leagues" class="muted back">← Leagues</a>
 
 {#if error}
 	<p class="error">{error}</p>
 {:else if !loaded}
-	<p class="muted">{language.isEnglish ? 'Loading…' : 'Lastar…'}</p>
+	<p class="muted">Loading…</p>
 {:else if league}
-	<p class="kicker">{isEnglish ? 'League' : 'Liga'}</p>
+	<p class="kicker">League</p>
 	<h1>{league.name}</h1>
 
 	<section class="card">
 		<div class="tabs">
-			<button class:active={tab === 'total'} onclick={() => (tab = 'total')}>{isEnglish ? 'Total' : 'Totalt'}</button>
-			<button class:active={tab === 'tipsPoints'} onclick={() => (tab = 'tipsPoints')}>{isEnglish ? 'Match tips' : 'Kamptips'}</button>
-			<button class:active={tab === 'forecastPoints'} onclick={() => (tab = 'forecastPoints')}>{isEnglish ? 'Forecast' : 'VM-tips'}</button>
+			<button class:active={tab === 'total'} onclick={() => (tab = 'total')}>Total</button>
+			<button class:active={tab === 'tipsPoints'} onclick={() => (tab = 'tipsPoints')}>Match tips</button>
+			<button class:active={tab === 'forecastPoints'} onclick={() => (tab = 'forecastPoints')}>Forecast</button>
 		</div>
 
 		<table class="lb">
 			<thead>
 				<tr>
 					<th>#</th>
-					<th>{isEnglish ? 'Player' : 'Spelar'}</th>
+					<th>Player</th>
 					{#if fcView}
-						<th class="num ext" title={isEnglish ? 'Correct group placement' : 'Rett gruppeplassering'}>{isEnglish ? 'Grp' : 'Grp'}</th>
-						<th class="num ext" title={isEnglish ? 'Teams that advanced from group stage' : 'Lag som gjekk vidare frå gruppespel'}>{isEnglish ? 'Adv' : 'Vid'}</th>
-						<th class="num ext" title={isEnglish ? 'Predicted team that reached Round of 32' : 'Tippa lag som nådde 32-delsfinale'}>R32</th>
-						<th class="num ext" title={isEnglish ? 'Predicted team that reached Round of 16' : 'Tippa lag som nådde åttedelsfinale'}>R16</th>
-						<th class="num ext" title={isEnglish ? 'Predicted team that reached quarter-final' : 'Tippa lag som nådde kvartfinale'}>QF</th>
-						<th class="num ext" title={isEnglish ? 'Predicted team that reached semi-final' : 'Tippa lag som nådde semifinale'}>SF</th>
-						<th class="num ext" title={isEnglish ? 'Predicted team that reached final' : 'Tippa lag som nådde finale'}>F</th>
-						<th class="num ext" title={isEnglish ? 'Correct winner predicted' : 'Rett vinnar tippa'}>{isEnglish ? 'Win' : 'Vinn'}</th>
+						<th class="num ext" title="Correct group placement">Grp</th>
+						<th class="num ext" title="Teams that advanced from group stage">Adv</th>
+						<th class="num ext" title="Predicted team that reached Round of 32">R32</th>
+						<th class="num ext" title="Predicted team that reached Round of 16">R16</th>
+						<th class="num ext" title="Predicted team that reached quarter-final">QF</th>
+						<th class="num ext" title="Predicted team that reached semi-final">SF</th>
+						<th class="num ext" title="Predicted team that reached final">F</th>
+						<th class="num ext" title="Correct winner predicted">Win</th>
 					{:else}
-						<th class="num ext" title={isEnglish ? 'Matches tipped' : 'Kampar tippa'}>Tips</th>
-						<th class="num ext" title={isEnglish ? 'Forecast points' : 'VM-tipspoeng'}>{isEnglish ? 'WC' : 'VM'}</th>
-						<th class="num ext" title={isEnglish ? 'Exact scores (tiebreaker 1)' : 'Eksakte resultat (tie-break 1)'}>{isEnglish ? 'Exact' : 'Eksakt'}</th>
-						<th class="num ext" title={isEnglish ? 'Correct winners (tiebreaker 2)' : 'Rette vinnarar (tie-break 2)'}>{isEnglish ? 'Win' : 'Vinn'}</th>
-						<th class="num ext" title={isEnglish ? 'Goal-difference error (tiebreaker 3, lower is better)' : 'Målforskjell-feil (tie-break 3, lågare er betre)'}>GD&Delta;</th>
+						<th class="num ext" title="Matches tipped">Tips</th>
+						<th class="num ext" title="Forecast points">WC</th>
+						<th class="num ext" title="Exact scores (tiebreaker 1)">Exact</th>
+						<th class="num ext" title="Correct winners (tiebreaker 2)">Win</th>
+						<th class="num ext" title="Goal-difference error (tiebreaker 3, lower is better)">GD&Delta;</th>
 					{/if}
-					<th class="num pts">{isEnglish ? 'Points' : 'Poeng'}</th>
+					<th class="num pts">Points</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -304,7 +299,7 @@
 									<a
 										class="fclink"
 										href={`/forecast/${r.userId}`}
-										title={isEnglish ? `View ${r.name}'s Forecast` : `Sjå VM-tipset til ${r.name}`}
+										title={`View ${r.name}'s Forecast`}
 										onclick={(e) => e.stopPropagation()}
 									>
 										<Telescope size={15} />
@@ -336,23 +331,23 @@
 							<td colspan="3">
 								{#if fcView}
 									<div class="stats">
-										<span><i>{isEnglish ? 'Correct group placement' : 'Rett gruppeplassering'}</i><b>{f.groups ?? 0}</b></span>
-										<span><i>{isEnglish ? 'Advanced team' : 'Lag vidare'}</i><b>{f.advance ?? 0}</b></span>
-										<span><i>{isEnglish ? 'Reached Round of 32' : 'Nådde 32-delsfinale'}</i><b>{f.R32 ?? 0}</b></span>
-										<span><i>{isEnglish ? 'Reached Round of 16' : 'Nådde åttedelsfinale'}</i><b>{f.R16 ?? 0}</b></span>
-										<span><i>{isEnglish ? 'Reached quarter-final' : 'Nådde kvartfinale'}</i><b>{f.QF ?? 0}</b></span>
-										<span><i>{isEnglish ? 'Reached semi-final' : 'Nådde semifinale'}</i><b>{f.SF ?? 0}</b></span>
-										<span><i>{isEnglish ? 'Reached final' : 'Nådde finale'}</i><b>{f.FINAL ?? 0}</b></span>
-										<span><i>{isEnglish ? 'Correct winner' : 'Rett vinnar'}</i><b>{f.champion ? (isEnglish ? 'Yes' : 'Ja') : (isEnglish ? 'No' : 'Nei')}</b></span>
+										<span><i>Correct group placement</i><b>{f.groups ?? 0}</b></span>
+										<span><i>Advanced team</i><b>{f.advance ?? 0}</b></span>
+										<span><i>Reached Round of 32</i><b>{f.R32 ?? 0}</b></span>
+										<span><i>Reached Round of 16</i><b>{f.R16 ?? 0}</b></span>
+										<span><i>Reached quarter-final</i><b>{f.QF ?? 0}</b></span>
+										<span><i>Reached semi-final</i><b>{f.SF ?? 0}</b></span>
+										<span><i>Reached final</i><b>{f.FINAL ?? 0}</b></span>
+										<span><i>Correct winner</i><b>{f.champion ? 'Yes' : 'No'}</b></span>
 									</div>
 								{:else}
 									<div class="stats">
-										<span><i>{isEnglish ? 'Matches tipped' : 'Kampar tippa'}</i><b>{r.predicted}</b></span>
-										<span><i>{isEnglish ? 'Match tip points' : 'Kamptipspoeng'}</i><b>{r.tipsPoints}</b></span>
-										<span><i>{isEnglish ? 'Forecast points' : 'VM-tipspoeng'}</i><b>{r.forecastPoints}</b></span>
-										<span><i>{isEnglish ? 'Exact scores' : 'Eksakte resultat'}</i><b>{r.exactScores}</b></span>
-										<span><i>{isEnglish ? 'Correct winners' : 'Rette vinnarar'}</i><b>{r.correctWinners}</b></span>
-										<span><i>{isEnglish ? 'Goal-difference error' : 'Målforskjell-feil'}</i><b>{r.gdDeviation}</b></span>
+										<span><i>Matches tipped</i><b>{r.predicted}</b></span>
+										<span><i>Match tip points</i><b>{r.tipsPoints}</b></span>
+										<span><i>Forecast points</i><b>{r.forecastPoints}</b></span>
+										<span><i>Exact scores</i><b>{r.exactScores}</b></span>
+										<span><i>Correct winners</i><b>{r.correctWinners}</b></span>
+										<span><i>Goal-difference error</i><b>{r.gdDeviation}</b></span>
 									</div>
 								{/if}
 							</td>
@@ -363,7 +358,7 @@
 		</table>
 
 		<p class="muted small note">
-			{isEnglish ? 'Points update automatically as results come in.' : 'Poenga blir oppdaterte automatisk når resultata kjem.'}
+			Points update automatically as results come in.
 		</p>
 	</section>
 
@@ -374,12 +369,12 @@
 	{#if invite && invite !== 'GLOBAL'}
 		<section class="card invite">
 			<div class="invite-head">
-				<h3>{isEnglish ? 'Share league' : 'Del liga'}</h3>
-				<p class="muted small">{isEnglish ? 'Share the code or link with the people you want to invite.' : 'Del koden eller lenka med dei du vil invitere.'}</p>
+				<h3>Share league</h3>
+				<p class="muted small">Share the code or link with the people you want to invite.</p>
 			</div>
 			<div class="irow">
 				<div class="ic">
-					<div class="muted small">{isEnglish ? 'Invite code' : 'Invitasjonskode'}</div>
+					<div class="muted small">Invite code</div>
 					<div class="code" class:masked={!revealed}>
 						{revealed ? invite : '•'.repeat(invite.length || 6)}
 					</div>
@@ -387,18 +382,18 @@
 				<div class="spacer"></div>
 				<button
 					class="btn secondary eye"
-					aria-label={revealed ? (isEnglish ? 'Hide code' : 'Skjul kode') : (isEnglish ? 'Show code' : 'Vis kode')}
+					aria-label={revealed ? 'Hide code' : 'Show code'}
 					onclick={() => (revealed = !revealed)}
 				>
 					{#if revealed}<EyeOff size={18} />{:else}<Eye size={18} />{/if}
 				</button>
 				<button class="btn secondary copy" onclick={copyInvite}>
-					<Copy size={16} /> {isEnglish ? 'Copy' : 'Kopier'}
+					<Copy size={16} /> Copy
 				</button>
 			</div>
 			<button class="btn share" onclick={shareInvite}>
 				<Share2 size={16} />
-				{linkCopied ? (isEnglish ? 'Link copied!' : 'Lenka er kopiert!') : (isEnglish ? 'Share invite link' : 'Del invitasjonslenke')}
+				{linkCopied ? 'Link copied!' : 'Share invite link'}
 			</button>
 		</section>
 	{/if}
@@ -406,29 +401,29 @@
 	{#if invite && invite !== 'GLOBAL' && inviteAdmin}
 		<section class="card invite-manager">
 			<div class="invite-head">
-				<h3><Mail size={17} /> {isEnglish ? 'Invite people' : 'Inviter folk'}</h3>
-				<p class="muted small">{isEnglish ? 'Send an in-app request to a registered user.' : 'Send ei førespurnad i appen til ein registrert brukar.'}</p>
+				<h3><Mail size={17} /> Invite people</h3>
+				<p class="muted small">Send an in-app request to a registered user.</p>
 			</div>
 
 			<label class="field invite-search">
-				<span class="muted small">{isEnglish ? 'Search users' : 'Søk etter brukarar'}</span>
+				<span class="muted small">Search users</span>
 				<span class="search-shell">
 					<Search size={16} />
 					<input
 						class="input"
 						bind:value={inviteQuery}
-						placeholder={isEnglish ? 'Name or email' : 'Namn eller e-post'}
+						placeholder="Name or email"
 						autocomplete="off"
 					/>
 				</span>
 			</label>
 
 			{#if inviteQuery.trim().length > 0 && inviteQuery.trim().length < 2}
-				<p class="muted small invite-note">{isEnglish ? 'Type at least 2 characters.' : 'Skriv minst 2 teikn.'}</p>
+				<p class="muted small invite-note">Type at least 2 characters.</p>
 			{:else if inviteSearchBusy}
-				<p class="muted small invite-note">{isEnglish ? 'Searching...' : 'Søkjer...'}</p>
+				<p class="muted small invite-note">Searching...</p>
 			{:else if inviteQuery.trim().length >= 2 && inviteCandidates.length === 0}
-				<p class="muted small invite-note">{isEnglish ? 'No available users found.' : 'Fann ingen tilgjengelege brukarar.'}</p>
+				<p class="muted small invite-note">No available users found.</p>
 			{/if}
 
 			{#if inviteCandidates.length > 0}
@@ -445,7 +440,7 @@
 								disabled={!!inviteSendBusy}
 								onclick={() => sendInvite(candidate)}
 							>
-								<UserPlus size={16} /> {inviteSendBusy === candidate.id ? (isEnglish ? 'Sending...' : 'Sender...') : (isEnglish ? 'Invite' : 'Inviter')}
+								<UserPlus size={16} /> {inviteSendBusy === candidate.id ? 'Sending...' : 'Invite'}
 							</button>
 						</div>
 					{/each}
@@ -454,7 +449,7 @@
 
 			{#if pendingInvites.length > 0}
 				<div class="pending-list">
-					<p class="kicker">{isEnglish ? 'Pending' : 'Ventande'}</p>
+					<p class="kicker">Pending</p>
 					{#each pendingInvites as pending (pending.id)}
 						<div class="pending-row">
 							<Avatar name={pending.invitedUser.name} src={pending.invitedUser.avatarUrl} size={34} />
@@ -474,15 +469,13 @@
 
 	{#if isAdmin}
 		<section class="card settings-zone">
-			<h3>{isEnglish ? 'League settings' : 'Ligainnstillingar'}</h3>
+			<h3>League settings</h3>
 
 			<label class="toggle-row">
 				<span class="toggle-label">
-					<b>{isEnglish ? 'Hide forecasts from members' : 'Skjul VM-tips for medlemmer'}</b>
+					<b>Hide forecasts from members</b>
 					<span class="muted small">
-						{isEnglish
-							? 'When on, members cannot view each other\'s pre-tournament bracket predictions.'
-							: 'Når aktiv, kan ikkje medlemmar sjå kvarandre sine VM-tips.'}
+						When on, members cannot view each other's pre-tournament bracket predictions.
 					</span>
 				</span>
 				<button
@@ -490,7 +483,7 @@
 					class:on={hideForecast}
 					disabled={settingsBusy}
 					aria-pressed={hideForecast}
-					aria-label={isEnglish ? 'Toggle hide forecasts' : 'Veksle skjul VM-tips'}
+					aria-label="Toggle hide forecasts"
 					onclick={toggleHideForecast}
 				>
 					<span class="toggle-thumb"></span>
@@ -503,14 +496,12 @@
 
 	{#if role === 'owner' && invite !== 'GLOBAL'}
 		<section class="card danger-zone">
-			<h3>{isEnglish ? 'Delete league' : 'Slett liga'}</h3>
+			<h3>Delete league</h3>
 			<p class="muted">
-				{isEnglish
-					? 'This permanently deletes the league and removes all memberships. Type the league name to confirm.'
-					: 'Dette slettar ligaen permanent og fjernar alle medlemskap. Skriv liganamnet for å stadfeste.'}
+				This permanently deletes the league and removes all memberships. Type the league name to confirm.
 			</p>
 			<label class="field">
-				<span class="muted small">{isEnglish ? 'Type' : 'Skriv'} {league.name}</span>
+				<span class="muted small">Type {league.name}</span>
 				<input class="input" bind:value={deleteConfirm} placeholder={league.name} />
 			</label>
 			<button
@@ -518,7 +509,7 @@
 				disabled={deleteBusy || deleteConfirm.trim() !== league.name.trim()}
 				onclick={deleteLeague}
 			>
-				{deleteBusy ? (isEnglish ? 'Deleting…' : 'Slettar…') : (isEnglish ? 'Delete league permanently' : 'Slett liga permanent')}
+				{deleteBusy ? 'Deleting…' : 'Delete league permanently'}
 			</button>
 			{#if deleteError}<p class="error">{deleteError}</p>{/if}
 		</section>
@@ -526,37 +517,35 @@
 
 	{#if cfg}
 		<details class="card legend">
-			<summary>{isEnglish ? 'How points work' : 'Slik fungerer poenga'}</summary>
+			<summary>How points work</summary>
 
-			<h4>{isEnglish ? 'Per match (match tips)' : 'Per kamp (kamptips)'} — {isEnglish ? 'max' : 'maks'} {cfg.match.tendency +
+			<h4>Per match (match tips) — max {cfg.match.tendency +
 					cfg.match.exact +
 					cfg.match.totalGoals +
 					cfg.match.goalDiff} p</h4>
 			<ul class="leg">
 				<li>
-					<span>{isEnglish ? 'Correct result - group stage: H / D / A; knockout: the team that advances' : 'Rett resultat - gruppespel: H / U / B; sluttspel: laget som går vidare'}</span><b>{cfg.match.tendency} p</b>
+					<span>Correct result - group stage: H / D / A; knockout: the team that advances</span><b>{cfg.match.tendency} p</b>
 				</li>
-				<li><span>{isEnglish ? 'Exact score' : 'Eksakt resultat'}</span><b>+{cfg.match.exact} p</b></li>
-				<li><span>{isEnglish ? 'Correct total goals' : 'Rett totalt mål'}</span><b>+{cfg.match.totalGoals} p</b></li>
-				<li><span>{isEnglish ? 'Correct goal difference' : 'Rett målforskjell'}</span><b>+{cfg.match.goalDiff} p</b></li>
+				<li><span>Exact score</span><b>+{cfg.match.exact} p</b></li>
+				<li><span>Correct total goals</span><b>+{cfg.match.totalGoals} p</b></li>
+				<li><span>Correct goal difference</span><b>+{cfg.match.goalDiff} p</b></li>
 			</ul>
 			<p class="muted small">
-				{isEnglish
-					? 'Knockout matches cannot end in a draw - the result points go to the team that advances. If a knockout match is decided in extra time, the score after extra time is used for points.'
-					: 'Sluttspelkampar kan ikkje ende uavgjort - resultatpoenga går til laget som går vidare. Blir ein sluttspelkamp avgjord etter ekstraomgangar, blir stillinga etter ekstraomgangar brukt til poeng.'}
+				Knockout matches cannot end in a draw - the result points go to the team that advances. If a knockout match is decided in extra time, the score after extra time is used for points.
 			</p>
 
-			<h4>{isEnglish ? 'Forecast for the tournament' : 'VM-tips for turneringa'}</h4>
+			<h4>Forecast for the tournament</h4>
 			<ul class="leg">
-				<li><span>{isEnglish ? 'Each team in the correct group position' : 'Kvart lag på rett gruppeplassering'}</span><b>{cfg.forecast.groupPosition} p</b></li>
-				<li><span>{isEnglish ? 'The full group in the correct order (bonus)' : 'Heile gruppa i rett rekkjefølgje (bonus)'}</span><b>+{cfg.forecast.perfectGroupBonus} p</b></li>
+				<li><span>Each team in the correct group position</span><b>{cfg.forecast.groupPosition} p</b></li>
+				<li><span>The full group in the correct order (bonus)</span><b>+{cfg.forecast.perfectGroupBonus} p</b></li>
 				<li>
-					<span>{isEnglish ? 'Each team you picked to advance (top 2 in a group or a best third) that actually goes through' : 'Kvart lag du tippa vidare (topp 2 i ei gruppe eller beste trear) som faktisk går vidare'}</span
+					<span>Each team you picked to advance (top 2 in a group or a best third) that actually goes through</span
 					><b>{cfg.forecast.advance} p</b>
 				</li>
 			</ul>
 			<p class="muted small">
-				{isEnglish ? 'Reached knockout round (per correctly predicted team):' : 'Nådde sluttspelet (per rett tippa lag):'}
+				Reached knockout round (per correctly predicted team):
 			</p>
 			<ul class="leg">
 				{#each Object.entries(roundLabel) as [k, lbl] (k)}
@@ -566,7 +555,7 @@
 				{/each}
 			</ul>
 
-			<h4>{isEnglish ? 'Tiebreakers (in order)' : 'Tie-break (i rekkjefølgje)'}</h4>
+			<h4>Tiebreakers (in order)</h4>
 			<ol class="tiebreak">
 				{#each cfg.tiebreakers as t (t)}
 					<li>{tbLabel[t] ?? t}</li>

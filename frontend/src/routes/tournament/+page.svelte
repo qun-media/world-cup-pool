@@ -5,7 +5,6 @@
 	import { serverClock } from '$lib/serverclock.svelte';
 	import { teamDisplayName } from '$lib/teamNames';
 	import { LocateFixed } from '@lucide/svelte';
-	import { language } from '$lib/language.svelte';
 	import { stageName as knockoutStageName } from '$lib/stageLabels';
 
 	let view = $state<'groups' | 'bracket'>('groups');
@@ -17,8 +16,6 @@
 	function played(m: Match) {
 		return m.status === 'finished' || !!m.finalizedAt;
 	}
-
-	const isEnglish = $derived(language.isEnglish);
 
 	interface Standing {
 		id: string;
@@ -133,40 +130,38 @@
 	function scoreText(m: Match) {
 		if (!played(m)) return '';
 		let s = `${m.ftHome}–${m.ftAway}`;
-		if (m.etHome || m.etAway) s = `${m.etHome}–${m.etAway} ${isEnglish ? 'aet' : 'e.eo.'}`;
-		if (m.penHome || m.penAway) s += ` (${m.penHome}–${m.penAway} ${isEnglish ? 'pens' : 'str'})`;
+		if (m.etHome || m.etAway) s = `${m.etHome}–${m.etAway} aet`;
+		if (m.penHome || m.penAway) s += ` (${m.penHome}–${m.penAway} pens)`;
 		return s;
 	}
 </script>
 
 <div class="stickyhead" use:collapseOnScroll>
-	<p class="kicker">VM 2026</p>
-	<div class="sh-expand"><div class="sh-inner"><h1>{isEnglish ? 'Tournament' : 'Turnering'}</h1></div></div>
+	<p class="kicker">World Cup 2026</p>
+	<div class="sh-expand"><div class="sh-inner"><h1>Tournament</h1></div></div>
 	<div class="seg">
-		<button class:on={view === 'groups'} onclick={() => (view = 'groups')}>{isEnglish ? 'Group tables' : 'Gruppetabellar'}</button>
-		<button class:on={view === 'bracket'} onclick={() => (view = 'bracket')}>{isEnglish ? 'Knockout bracket' : 'Sluttspel'}</button>
+		<button class:on={view === 'groups'} onclick={() => (view = 'groups')}>Group tables</button>
+		<button class:on={view === 'bracket'} onclick={() => (view = 'bracket')}>Knockout bracket</button>
 	</div>
 </div>
 
 {#if !tipsStore.loaded}
-	<p class="muted">{isEnglish ? 'Loading…' : 'Lastar…'}</p>
+	<p class="muted">Loading…</p>
 {:else if view === 'groups'}
 	{#if groups.length === 0}
 		<div class="card empty">
 			<p class="muted">
-				{isEnglish
-					? 'No group-stage matches have been played yet. The tables will fill as results come in.'
-					: 'Ingen gruppespelkampar er spelte enno. Tabellane blir fylte når resultata kjem.'}
+				No group-stage matches have been played yet. The tables will fill as results come in.
 			</p>
 		</div>
 	{:else}
 		<div class="gwrap stagger">
 			{#each groups as g (g.letter)}
 				<section class="card grp">
-					<div class="ghead"><span class="gl">{g.letter}</span> {isEnglish ? 'Group' : 'Gruppe'} {g.letter}</div>
+					<div class="ghead"><span class="gl">{g.letter}</span> Group {g.letter}</div>
 					<table>
 						<thead>
-							<tr><th></th><th>{isEnglish ? 'Team' : 'Lag'}</th><th>{isEnglish ? 'P' : 'K'}</th><th>{isEnglish ? 'GD' : 'MF'}</th><th>{isEnglish ? 'Pts' : 'P'}</th></tr>
+							<tr><th></th><th>Team</th><th>P</th><th>GD</th><th>Pts</th></tr>
 						</thead>
 						<tbody>
 							{#each g.rows as r, i (r.id)}
@@ -215,8 +210,8 @@
 {/if}
 
 {#if tipsStore.loaded && view === 'bracket' && currentStage}
-	<button class="fab" onclick={goNow} aria-label={isEnglish ? 'Jump to current round' : 'Hopp til aktuell runde'}>
-		<LocateFixed size={18} /> {isEnglish ? 'Now' : 'No'}
+	<button class="fab" onclick={goNow} aria-label="Jump to current round">
+		<LocateFixed size={18} /> Now
 	</button>
 {/if}
 

@@ -2,7 +2,6 @@
 	import { goto } from '$app/navigation';
 	import { tick } from 'svelte';
 	import { api, type LeagueSummary } from '$lib/api';
-	import { language } from '$lib/language.svelte';
 	import { strings } from '$lib/strings';
 	import { searchNav } from '$lib/searchNav.svelte';
 	import { searchApp, totalSearchResults, type SearchGroup, type SearchResult } from '$lib/search';
@@ -17,7 +16,7 @@
 	let leaguesLoaded = $state(false);
 	let leaguesBusy = $state(false);
 	let inputEl = $state<HTMLInputElement | null>(null);
-	const t = $derived(strings[language.resolved]);
+	const t = strings;
 
 	const results = $derived(
 		searchApp(query, {

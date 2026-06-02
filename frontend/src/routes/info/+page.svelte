@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
-	import { language } from '$lib/language.svelte';
 	import {
 		ArrowLeft,
 		CheckCircle2,
@@ -17,59 +16,49 @@
 		X
 	} from '@lucide/svelte';
 
-	const isEnglish = $derived(language.isEnglish);
-
-	let flow = $derived.by(() => [
+	let flow = [
 		{
 			icon: Telescope,
-			title: isEnglish ? 'Forecast before kickoff' : 'VM-tips før avspark',
-			text: isEnglish
-				? 'Set the group order, best thirds, and the full knockout bracket before the first whistle.'
-				: 'Set grupperekkjefølgje, beste trearar og heile sluttspelstreet før første avspark.'
+			title: 'Forecast before kickoff',
+			text: 'Set the group order, best thirds, and the full knockout bracket before the first whistle.'
 		},
 		{
 			icon: Volleyball,
-			title: isEnglish ? 'Match tips before every game' : 'Kamptips før kvar kamp',
-			text: isEnglish
-				? 'Pick the score for every match. You can change it right up until kickoff.'
-				: 'Tipp resultatet for kvar kamp. Du kan endre heilt fram til avspark.'
+			title: 'Match tips before every game',
+			text: 'Pick the score for every match. You can change it right up until kickoff.'
 		},
 		{
 			icon: Clock,
-			title: isEnglish ? 'The tip locks' : 'Tipset låser seg',
-			text: isEnglish
-				? 'When the game starts, your tip locks and friends’ tips become visible in leagues.'
-				: 'Når kampen startar, blir tipset låst, og tipsa til vener blir synlege i ligaene.'
+			title: 'The tip locks',
+			text: 'When the game starts, your tip locks and friends’ tips become visible in leagues.'
 		},
 		{
 			icon: Trophy,
-			title: isEnglish ? 'Points along the way' : 'Poeng undervegs',
-			text: isEnglish
-				? 'Results, tables, and points update continuously through the group stage and knockout rounds.'
-				: 'Resultat, tabellar og poeng blir oppdaterte gjennom gruppespel og sluttspel.'
+			title: 'Points along the way',
+			text: 'Results, tables, and points update continuously through the group stage and knockout rounds.'
 		}
-	]);
+	];
 
-	let matchPoints = $derived.by(() => [
-		{ label: isEnglish ? 'Correct outcome' : 'Rett utfall', value: '3', detail: isEnglish ? '1/X/2 in group stage, the team that advances in knockout' : '1/X/2 i gruppespel, laget som går vidare i sluttspel' },
-		{ label: isEnglish ? 'Exact score' : 'Eksakt resultat', value: '+1', detail: isEnglish ? 'same score as the final result' : 'same resultat som sluttresultatet' },
-		{ label: isEnglish ? 'Total goals' : 'Totalt mål', value: '+1', detail: isEnglish ? 'for example 2-1 and 3-0 both count as 3 goals' : 'til dømes tel både 2-1 og 3-0 som 3 mål' },
-		{ label: isEnglish ? 'Correct goal difference' : 'Rett målforskjell', value: '+1', detail: isEnglish ? 'for example a one-goal win or a draw' : 'til dømes eittmålsiger eller uavgjort' }
-	]);
+	let matchPoints = [
+		{ label: 'Correct outcome', value: '3', detail: '1/X/2 in group stage, the team that advances in knockout' },
+		{ label: 'Exact score', value: '+1', detail: 'same score as the final result' },
+		{ label: 'Total goals', value: '+1', detail: 'for example 2-1 and 3-0 both count as 3 goals' },
+		{ label: 'Correct goal difference', value: '+1', detail: 'for example a one-goal win or a draw' }
+	];
 
-	let forecastPoints = $derived.by(() => [
-		{ label: isEnglish ? 'Correct group placement' : 'Rett gruppeplassering', value: '1' },
-		{ label: isEnglish ? 'Perfect group' : 'Perfekt gruppe', value: '+2' },
-		{ label: isEnglish ? 'Correct team through' : 'Rett lag vidare', value: '+1' },
-		{ label: isEnglish ? 'R32 / R16 / QF' : '32-del / 16-del / kvart', value: '1 / 2 / 3' },
-		{ label: isEnglish ? 'SF / Final / Winner' : 'Semi / finale / vinnar', value: '5 / 8 / 13' }
-	]);
+	let forecastPoints = [
+		{ label: 'Correct group placement', value: '1' },
+		{ label: 'Perfect group', value: '+2' },
+		{ label: 'Correct team through', value: '+1' },
+		{ label: 'R32 / R16 / QF', value: '1 / 2 / 3' },
+		{ label: 'SF / Final / Winner', value: '5 / 8 / 13' }
+	];
 
-	let appFacts = $derived.by(() => [
-		{ icon: Users, title: isEnglish ? 'Leagues' : 'Ligaer', text: isEnglish ? 'Create private leagues, share an invite, and follow the table together.' : 'Opprett private ligaer, del invitasjon og følg tabellen saman.' },
-		{ icon: Network, title: isEnglish ? 'Tournament' : 'Turnering', text: isEnglish ? 'See groups, fixtures, and the knockout tree as the World Cup unfolds.' : 'Sjå grupper, kampar og sluttspelstreet medan VM går føre seg.' },
-		{ icon: ListChecks, title: isEnglish ? 'Overview' : 'Oversikt', text: isEnglish ? 'The home page shows what is missing, the next deadline, and your standing.' : 'Framsida viser kva som manglar, neste frist og plasseringa di.' }
-	]);
+	let appFacts = [
+		{ icon: Users, title: 'Leagues', text: 'Create private leagues, share an invite, and follow the table together.' },
+		{ icon: Network, title: 'Tournament', text: 'See groups, fixtures, and the knockout tree as the World Cup unfolds.' },
+		{ icon: ListChecks, title: 'Overview', text: 'The home page shows what is missing, the next deadline, and your standing.' }
+	];
 
 	function closeInfo() {
 		if (browser && history.length > 1) {
@@ -81,36 +70,34 @@
 </script>
 
 <svelte:head>
-	<title>{isEnglish ? 'About the game' : 'Info om spelet'} · WC Pool</title>
+	<title>About the game · WC Pool</title>
 </svelte:head>
 
 <div class="info-page">
-	<button class="close" type="button" aria-label={isEnglish ? 'Close and go back' : 'Lukk og gå tilbake'} onclick={closeInfo}>
+	<button class="close" type="button" aria-label="Close and go back" onclick={closeInfo}>
 		<X size={18} />
-		<span>{isEnglish ? 'Close' : 'Lukk'}</span>
+		<span>Close</span>
 	</button>
 
 	<section class="hero" aria-labelledby="info-title">
 		<div class="hero-copy">
 			<p class="kicker">Info</p>
-			<h1 id="info-title">{isEnglish ? 'How WC Pool works' : 'Slik fungerer WC Pool'}</h1>
+			<h1 id="info-title">How WC Pool works</h1>
 			<p class="lead">
-				{isEnglish
-					? 'Pick the full World Cup before kickoff, enter match tips before every game, and compete with friends in leagues as the tournament rolls on.'
-					: 'Tipp heile VM før avspark, legg inn kamptips før kvar kamp, og konkurrer med vener i ligaer gjennom turneringa.'}
+				Pick the full World Cup before kickoff, enter match tips before every game, and compete with friends in leagues as the tournament rolls on.
 			</p>
 		</div>
-		<div class="scoreboard" aria-label={isEnglish ? 'Quick overview' : 'Kort oversikt'}>
-			<div><strong>104</strong><span>{isEnglish ? 'matches' : 'kampar'}</span></div>
-			<div><strong>1</strong><span>{isEnglish ? 'Forecast' : 'VM-tips'}</span></div>
-			<div><strong>6</strong><span>{isEnglish ? 'max per game' : 'maks per kamp'}</span></div>
+		<div class="scoreboard" aria-label="Quick overview">
+			<div><strong>104</strong><span>matches</span></div>
+			<div><strong>1</strong><span>Forecast</span></div>
+			<div><strong>6</strong><span>max per game</span></div>
 		</div>
 	</section>
 
 	<section class="section-block" aria-labelledby="journey-title">
 		<div class="section-head">
 			<Info size={18} />
-			<h2 id="journey-title">{isEnglish ? 'How it flows' : 'Slik går det føre seg'}</h2>
+			<h2 id="journey-title">How it flows</h2>
 		</div>
 		<div class="flow-grid">
 			{#each flow as step, index}
@@ -127,7 +114,7 @@
 	<section class="section-block" aria-labelledby="app-title">
 		<div class="section-head">
 			<CheckCircle2 size={18} />
-			<h2 id="app-title">{isEnglish ? 'The app and the game' : 'Appen og spelet'}</h2>
+			<h2 id="app-title">The app and the game</h2>
 		</div>
 		<div class="facts-grid">
 			{#each appFacts as fact}
@@ -146,16 +133,16 @@
 	<section class="section-block scoring" aria-labelledby="score-title">
 		<div class="section-head">
 			<Medal size={18} />
-			<h2 id="score-title">{isEnglish ? 'Scoring system' : 'Poengsystem'}</h2>
+			<h2 id="score-title">Scoring system</h2>
 		</div>
 
 		<div class="score-layout">
 			<article class="card score-panel match-panel">
 				<div class="panel-title">
 					<Volleyball size={20} />
-					<h3>{isEnglish ? 'Match tips' : 'Kamptips'}</h3>
+					<h3>Match tips</h3>
 				</div>
-				<p>{isEnglish ? 'Max 6 points per match. In knockout, the advancing team counts as the correct outcome.' : 'Maks 6 poeng per kamp. I sluttspel tel laget som går vidare som rett utfall.'}</p>
+				<p>Max 6 points per match. In knockout, the advancing team counts as the correct outcome.</p>
 				<div class="point-list">
 					{#each matchPoints as point}
 						<div class="point-row">
@@ -172,9 +159,9 @@
 			<article class="card score-panel forecast-panel">
 				<div class="panel-title">
 					<Telescope size={20} />
-					<h3>{isEnglish ? 'Forecast' : 'VM-tips'}</h3>
+					<h3>Forecast</h3>
 				</div>
-				<p>{isEnglish ? 'The Forecast locks at the first match and scores as groups and rounds are decided.' : 'VM-tipset låser seg ved første kamp og gir poeng etter kvart som grupper og rundar blir avgjorde.'}</p>
+				<p>The Forecast locks at the first match and scores as groups and rounds are decided.</p>
 				<div class="forecast-grid">
 					{#each forecastPoints as point}
 						<div>
@@ -189,16 +176,14 @@
 		<div class="card tie-break">
 			<Medal size={18} />
 			<p>
-				{isEnglish
-					? 'If points are tied, the table sorts by most exact scores, most correct winners, lowest goal-difference error, fewest submitted tips, and earliest submission.'
-					: 'Ved poenglikskap blir tabellen sortert etter flest eksakte resultat, flest rette vinnarar, lågaste målforskjell-feil, færrast leverte tips og tidlegaste levering.'}
+				If points are tied, the table sorts by most exact scores, most correct winners, lowest goal-difference error, fewest submitted tips, and earliest submission.
 			</p>
 		</div>
 	</section>
 
 	<button class="back-bottom" type="button" onclick={closeInfo}>
 		<ArrowLeft size={18} />
-		{isEnglish ? 'Back' : 'Tilbake'}
+		Back
 	</button>
 
 	<footer class="copyright">

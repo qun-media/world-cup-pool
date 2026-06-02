@@ -2,7 +2,6 @@
 	import { auth } from '$lib/auth.svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { language } from '$lib/language.svelte';
 	import { strings } from '$lib/strings';
 
 	// After registering, resume an invite if one was carried in the URL.
@@ -19,7 +18,7 @@
 	let password = $state('');
 	let error = $state('');
 	let busy = $state(false);
-	const t = $derived(strings[language.resolved]);
+	const t = strings;
 
 	async function submit(e: Event) {
 		e.preventDefault();

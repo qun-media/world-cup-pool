@@ -3,14 +3,13 @@
 	import Logo from '$lib/components/Logo.svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { language } from '$lib/language.svelte';
 	import { strings } from '$lib/strings';
 
 	let identity = $state('');
 	let password = $state('');
 	let error = $state('');
 	let busy = $state(false);
-	const t = $derived(strings[language.resolved]);
+	const t = strings;
 
 	// After signing in, resume an invite if one was carried in the URL.
 	let invite = $derived($page.url.searchParams.get('invite'));

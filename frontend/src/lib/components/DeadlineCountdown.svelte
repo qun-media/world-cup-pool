@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
-	import { language } from '$lib/language.svelte';
 	import { serverClock } from '$lib/serverclock.svelte';
 
 	let {
@@ -35,7 +34,7 @@
 		const hours = Math.floor((totalSeconds % 86_400) / 3_600);
 		const minutes = Math.floor((totalSeconds % 3_600) / 60);
 		const seconds = totalSeconds % 60;
-		const hourUnit = language.isEnglish ? 'h' : 't';
+		const hourUnit = 'h';
 
 		if (days > 0) {
 			return hours > 0 ? `${days} d ${hours} ${hourUnit}` : `${days} d`;
@@ -56,7 +55,7 @@
 		remainingMs <= 600_000 ? 'critical' : remainingMs <= 3_600_000 ? 'warn' : 'normal'
 	);
 	let remainingLabel = $derived(expired ? '' : formatRemaining(remainingMs));
-	let relationLabel = $derived(language.isEnglish ? 'in' : 'om');
+	let relationLabel = 'in';
 
 	$effect(() => {
 		now = serverClock.now();
