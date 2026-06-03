@@ -29,9 +29,10 @@ backwards compatibility with existing deployments.
 - Private leagues with invite codes and shareable join links.
 - Global league, leaderboard breakdowns, and tiebreaker details.
 - Built-in search for matches, teams, groups, and leagues.
-- English/Nynorsk language toggle plus light/dark theming.
+- Light/dark theming.
 - League progress and points trend views to follow score changes over time.
 - League chat, friend tip visibility after kickoff, and forecast detail views.
+- Optional per-league setting to hide members' bracket predictions from each other.
 - Admin result override and scoring recompute endpoints.
 - Optional Google OAuth, email/password auth, password reset, avatars, and PWA install.
 - Results can come from openfootball data, API-Football, or manual admin updates.
