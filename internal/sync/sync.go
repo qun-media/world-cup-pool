@@ -252,7 +252,10 @@ func SyncOnce(ctx context.Context, app core.App, client *football.Client) error 
 	// Index our matches by the normalized team-name pair (group stage) so we
 	// can line them up with provider fixtures regardless of fixture ids.
 	teamName := map[string]string{} // teamId -> normalized name
-	teams, _ := app.FindRecordsByFilter("teams", "id != ''", "", 0, 0)
+	teams, err := app.FindRecordsByFilter("teams", "id != ''", "", 0, 0)
+	if err != nil {
+		return fmt.Errorf("load teams: %w", err)
+	}
 	for _, t := range teams {
 		teamName[t.Id] = canonName(t.GetString("name"))
 	}

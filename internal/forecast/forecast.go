@@ -5,6 +5,7 @@
 package forecast
 
 import (
+	"log"
 	"net/http"
 	"strings"
 	"sync/atomic"
@@ -176,9 +177,17 @@ func Register(app core.App, se *core.ServeEvent) {
 		}
 		var order, bracket map[string]any
 		var thirds map[string]any
-		_ = fc.UnmarshalJSONField("groupOrder", &order)
-		_ = fc.UnmarshalJSONField("thirdQualifiers", &thirds)
-		_ = fc.UnmarshalJSONField("bracket", &bracket)
+		parse := func(field string, dst any) {
+			if raw := fc.GetString(field); raw == "" || raw == "null" {
+				return
+			}
+			if err := fc.UnmarshalJSONField(field, dst); err != nil {
+				log.Printf("[forecast] %s: bad %s JSON: %v", fc.Id, field, err)
+			}
+		}
+		parse("groupOrder", &order)
+		parse("thirdQualifiers", &thirds)
+		parse("bracket", &bracket)
 		out["forecast"] = map[string]any{
 			"groupOrder":      order,
 			"thirdQualifiers": thirds,

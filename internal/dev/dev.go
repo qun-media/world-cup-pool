@@ -36,16 +36,16 @@ var botNames = []string{
 }
 
 var botChatLines = []string{
-	"Dette ser lovande ut.",
-	"Eg star ved tipset mitt.",
-	"Her luktar det ekstraomgangar.",
-	"Stor sjanse for overrasking no.",
-	"Den scoringa der snudde alt.",
-	"Eg jaktar tabelltoppen no.",
-	"Dette var smart tippa.",
-	"No vil eg sjå fleire mal.",
-	"Forsvaret held ikkje lenge til.",
-	"Chatten vaknar endeleg til liv.",
+	"This is looking promising.",
+	"I'm standing by my pick.",
+	"This one smells like extra time.",
+	"Big chance for an upset now.",
+	"That goal changed everything.",
+	"I'm chasing the top spot now.",
+	"That was a smart prediction.",
+	"Now I want to see more goals.",
+	"That defense won't hold much longer.",
+	"The chat is finally coming alive.",
 }
 
 const leagueMessagesCollection = "league_messages"

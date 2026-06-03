@@ -1084,33 +1084,6 @@
 		</section>
 	{/if}
 
-	{#if false && hasPodium}
-		<!-- Top 3 podium summary -->
-		<section class="card champ tile podium-card home-span-support">
-			<div class="hd">
-				<h3><Crown size={15} style="margin-right:0.35rem;vertical-align:-2px;color:var(--gold)" /> Din pall</h3>
-				<a class="hdlink" href="/forecast">Endre</a>
-			</div>
-			<div class="podium-list">
-				{#each podium as pick (pick.place)}
-					{#if pick.id}
-						{@const pickedTeam = teamAny(pick.id)}
-						<div class="podium-row place-{pick.place}">
-							<span class="medal">{pick.place}</span>
-							<span>
-								<i>{pick.label}</i>
-								<b>
-									<Flag iso2={pickedTeam?.iso2 ?? ''} code={pickedTeam?.fifaCode ?? ''} size={16} />
-									{teamDisplayName(pickedTeam, 'Unknown')}
-								</b>
-							</span>
-						</div>
-					{/if}
-				{/each}
-			</div>
-		</section>
-	{/if}
-
 	{#if nextMatchesPreview.length > 0}
 		<section class="card tile next-card home-span-primary">
 			<div class="hd">

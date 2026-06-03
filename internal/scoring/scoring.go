@@ -9,6 +9,7 @@ package scoring
 
 import (
 	"encoding/json"
+	"log"
 	"sort"
 	"strconv"
 	"strings"
@@ -38,7 +39,11 @@ type Config struct {
 
 func loadConfig(rec *core.Record) Config {
 	var c Config
-	_ = json.Unmarshal([]byte(rec.GetString("config")), &c)
+	if raw := rec.GetString("config"); raw != "" {
+		if err := json.Unmarshal([]byte(raw), &c); err != nil {
+			log.Printf("[scoring] config %s: invalid JSON, using defaults: %v", rec.Id, err)
+		}
+	}
 	// Backward-compat default for configs predating the "advance" rule.
 	if c.Forecast.Advance == 0 {
 		c.Forecast.Advance = 1
@@ -190,8 +195,12 @@ type teamAgg struct {
 // best-third rank. The FIFA tiebreaker order (including head-to-head) lives in
 // internal/standings, shared with bracket resolution so the two never disagree.
 func finalGroups(app core.App) (order map[string][]string, thirds []teamAgg) {
-	ms, _ := app.FindRecordsByFilter("matches",
+	ms, err := app.FindRecordsByFilter("matches",
 		"stage = 'group' && finalizedAt != ''", "", 0, 0)
+	if err != nil {
+		log.Printf("[scoring] finalGroups: load group matches: %v", err)
+		return nil, nil
+	}
 	var ranked []standings.Row
 	order, ranked, _ = standings.GroupTables(standings.FromRecords(ms))
 	for _, r := range ranked {
@@ -231,7 +240,11 @@ func bestThirdSet(thirds []teamAgg) map[string]bool {
 func actualRoundTeams(app core.App) (map[string]map[string]bool, string) {
 	res := map[string]map[string]bool{}
 	champion := ""
-	ms, _ := app.FindRecordsByFilter("matches", "stage != 'group'", "num", 0, 0)
+	ms, err := app.FindRecordsByFilter("matches", "stage != 'group'", "num", 0, 0)
+	if err != nil {
+		log.Printf("[scoring] actualRoundTeams: load knockout matches: %v", err)
+		return res, champion
+	}
 	for _, m := range ms {
 		st := m.GetString("stage")
 		if res[st] == nil {
@@ -422,12 +435,24 @@ func (b fcBreakdown) total() int {
 func scoreForecast(app core.App, cfg Config, fc *core.Record) (fcBreakdown, int) {
 	b := fcBreakdown{RoundCorrect: map[string]int{}}
 
+	// Empty/null fields are normal for in-progress forecasts; only genuine
+	// malformed JSON is logged (parsing leaves the destination at its zero
+	// value either way, so scoring degrades gracefully).
+	parse := func(field string, dst any) {
+		raw := fc.GetString(field)
+		if raw == "" || raw == "null" {
+			return
+		}
+		if err := json.Unmarshal([]byte(raw), dst); err != nil {
+			log.Printf("[scoring] forecast %s: bad %s JSON: %v", fc.Id, field, err)
+		}
+	}
 	var order map[string][]string
-	_ = fc.UnmarshalJSONField("groupOrder", &order)
+	parse("groupOrder", &order)
 	var thirds map[string]string
-	_ = fc.UnmarshalJSONField("thirdQualifiers", &thirds)
+	parse("thirdQualifiers", &thirds)
 	var bracket map[string]string
-	_ = fc.UnmarshalJSONField("bracket", &bracket)
+	parse("bracket", &bracket)
 
 	actualOrder, thirdAggs := finalGroups(app)
 	for g, actual := range actualOrder {
@@ -480,7 +505,10 @@ func scoreForecast(app core.App, cfg Config, fc *core.Record) (fcBreakdown, int)
 	}
 
 	actualRounds, actualChamp := actualRoundTeams(app)
-	koList, _ := app.FindRecordsByFilter("matches", "stage != 'group'", "num", 0, 0)
+	koList, err := app.FindRecordsByFilter("matches", "stage != 'group'", "num", 0, 0)
+	if err != nil {
+		log.Printf("[scoring] forecast %s: load knockout matches: %v", fc.Id, err)
+	}
 	koByNum := map[int]*core.Record{}
 	for _, m := range koList {
 		if n := m.GetInt("num"); n > 0 {

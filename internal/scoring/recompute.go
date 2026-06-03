@@ -23,18 +23,29 @@ func Recompute(app core.App) error {
 		if err != nil {
 			return err
 		}
-		// Clear and rebuild (small data set).
-		old, _ := tx.FindRecordsByFilter("match_scores", "id != ''", "", 0, 0)
+		// Clear and rebuild (small data set). All queries below are checked:
+		// because this runs in a transaction, returning an error rolls back the
+		// deletes — a transient query failure must never commit a partial wipe.
+		old, err := tx.FindRecordsByFilter("match_scores", "id != ''", "", 0, 0)
+		if err != nil {
+			return err
+		}
 		for _, r := range old {
 			if err := tx.Delete(r); err != nil {
 				return err
 			}
 		}
-		finished, _ := tx.FindRecordsByFilter("matches",
+		finished, err := tx.FindRecordsByFilter("matches",
 			"finalizedAt != ''", "", 0, 0)
+		if err != nil {
+			return err
+		}
 		for _, match := range finished {
-			tipList, _ := tx.FindRecordsByFilter("tips",
+			tipList, err := tx.FindRecordsByFilter("tips",
 				"match = {:m}", "", 0, 0, map[string]any{"m": match.Id})
+			if err != nil {
+				return err
+			}
 			for _, tip := range tipList {
 				for cid, cfg := range configs {
 					comp := scoreTip(cfg, match, tip)
@@ -43,7 +54,10 @@ func Recompute(app core.App) error {
 					rec.Set("match", match.Id)
 					rec.Set("config", cid)
 					rec.Set("points", comp.points())
-					cj, _ := json.Marshal(comp)
+					cj, err := json.Marshal(comp)
+					if err != nil {
+						return err
+					}
 					rec.Set("components", string(cj))
 					if err := tx.Save(rec); err != nil {
 						return err
@@ -57,13 +71,19 @@ func Recompute(app core.App) error {
 		if err != nil {
 			return err
 		}
-		oldF, _ := tx.FindRecordsByFilter("forecast_scores", "id != ''", "", 0, 0)
+		oldF, err := tx.FindRecordsByFilter("forecast_scores", "id != ''", "", 0, 0)
+		if err != nil {
+			return err
+		}
 		for _, r := range oldF {
 			if err := tx.Delete(r); err != nil {
 				return err
 			}
 		}
-		forecasts, _ := tx.FindRecordsByFilter("forecasts", "id != ''", "", 0, 0)
+		forecasts, err := tx.FindRecordsByFilter("forecasts", "id != ''", "", 0, 0)
+		if err != nil {
+			return err
+		}
 		for _, fc := range forecasts {
 			for cid, cfg := range configs {
 				bd, total := scoreForecast(tx, cfg, fc)
@@ -71,7 +91,10 @@ func Recompute(app core.App) error {
 				rec.Set("user", fc.GetString("user"))
 				rec.Set("config", cid)
 				rec.Set("points", total)
-				bj, _ := json.Marshal(bd)
+				bj, err := json.Marshal(bd)
+				if err != nil {
+					return err
+				}
 				rec.Set("breakdown", string(bj))
 				if err := tx.Save(rec); err != nil {
 					return err
