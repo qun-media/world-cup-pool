@@ -3,7 +3,7 @@ export const strings = {
 		home: 'Home',
 		matchTips: 'Match Tips',
 		worldCupTips: 'Forecast',
-		bracket: 'Bracket',
+		bracket: 'Tournament',
 		leagues: 'Leagues'
 	},
 	chrome: {

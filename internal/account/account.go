@@ -13,10 +13,8 @@ func bad(e *core.RequestEvent, code int, msg string) error {
 	return e.JSON(code, map[string]string{"error": msg})
 }
 
-// Register wires account-management endpoints for the signed-in user
-// and registers background hooks (e.g. signup email alerts).
+// Register wires account-management endpoints for the signed-in user.
 func Register(app core.App, se *core.ServeEvent) {
-	registerSignupAlerts(app)
 	g := se.Router.Group("/api/account")
 	g.Bind(apis.RequireAuth())
 

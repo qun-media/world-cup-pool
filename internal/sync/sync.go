@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"sort"
+	gosync "sync"
 	"time"
 
 	"github.com/pocketbase/pocketbase/apis"
@@ -18,9 +19,73 @@ import (
 	"github.com/oyvhov/world-cup-pool/internal/football"
 )
 
-// cronExpr runs the sync every 30 minutes => max 48 requests/day, comfortably
-// under the API-Football free tier (100/day).
+// cronExpr fires every 30 minutes. Actual API-Football calls are gated by
+// anyMatchEligible and the 100/day cap, so the true call rate is much lower.
 const cronExpr = "*/30 * * * *"
+
+const apiDailyLimit = 100
+
+// groupWait: 90 min regulation + 45 min buffer after kickoff.
+// knockoutWait: 120 min (with ET) + 90 min buffer after kickoff.
+const (
+	groupWait    = (90 + 45) * time.Minute
+	knockoutWait = (120 + 90) * time.Minute
+)
+
+// dailyCounter tracks API-Football requests within the current UTC day.
+type dailyCounter struct {
+	mu    gosync.Mutex
+	date  string
+	count int
+}
+
+// increment claims one request slot. Returns false if the daily cap is reached.
+func (d *dailyCounter) increment() bool {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	today := time.Now().UTC().Format("2006-01-02")
+	if d.date != today {
+		d.date = today
+		d.count = 0
+	}
+	if d.count >= apiDailyLimit {
+		return false
+	}
+	d.count++
+	return true
+}
+
+func (d *dailyCounter) snapshot() (date string, count int) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return d.date, d.count
+}
+
+// anyMatchEligible returns true when at least one unfinished match has passed
+// its post-kickoff wait window and results may be available on the API.
+func anyMatchEligible(app core.App) bool {
+	now := time.Now().UTC()
+	matches, err := app.FindRecordsByFilter("matches",
+		"status != 'finished' && status != 'postponed' && status != 'cancelled'",
+		"kickoff", 0, 0)
+	if err != nil {
+		return true // fail open: let the sync attempt
+	}
+	for _, m := range matches {
+		kickoff := m.GetDateTime("kickoff").Time()
+		if kickoff.IsZero() {
+			continue
+		}
+		wait := knockoutWait
+		if m.GetString("stage") == "group" {
+			wait = groupWait
+		}
+		if now.After(kickoff.Add(wait)) {
+			return true
+		}
+	}
+	return false
+}
 
 // nameAliases maps API-Football names that differ from the openfootball seed
 // names to the seeded team name. This only matters for the optional
@@ -94,9 +159,21 @@ func pickProvider(app core.App) (string, func(context.Context) error) {
 // Called from the OnServe hook.
 func Register(app core.App, se *core.ServeEvent) {
 	source, run := pickProvider(app)
+	isAPIFootball := source == "api-football"
+
+	var counter dailyCounter
 
 	if run != nil {
 		app.Cron().MustAdd("results-sync", cronExpr, func() {
+			if isAPIFootball {
+				if !anyMatchEligible(app) {
+					return
+				}
+				if !counter.increment() {
+					log.Printf("[sync] daily API-Football limit reached (%d/day), skipping", apiDailyLimit)
+					return
+				}
+			}
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
 			if err := run(ctx); err != nil {
@@ -108,17 +185,28 @@ func Register(app core.App, se *core.ServeEvent) {
 		log.Printf("[sync] no results source — manual override only")
 	}
 
-	// Force a sync now (superuser).
+	// Force a sync now (superuser). Bypasses the eligibility window but still
+	// counts against the daily cap when using API-Football.
 	se.Router.POST("/api/sync/refresh", func(e *core.RequestEvent) error {
 		if run == nil {
 			return e.JSON(400, map[string]string{"error": "no results source configured"})
+		}
+		if isAPIFootball && !counter.increment() {
+			return e.JSON(429, map[string]string{
+				"error": fmt.Sprintf("daily API-Football limit reached (%d/day)", apiDailyLimit),
+			})
 		}
 		ctx, cancel := context.WithTimeout(e.Request.Context(), 30*time.Second)
 		defer cancel()
 		if err := run(ctx); err != nil {
 			return e.JSON(500, map[string]string{"error": err.Error()})
 		}
-		return e.JSON(200, map[string]string{"status": "ok", "source": source})
+		result := map[string]any{"status": "ok", "source": source}
+		if isAPIFootball {
+			_, count := counter.snapshot()
+			result["requestsToday"] = count
+		}
+		return e.JSON(200, result)
 	}).Bind(apis.RequireSuperuserAuth())
 
 	// Manual result override (superuser). Body: ftHome,ftAway,etHome,etAway,

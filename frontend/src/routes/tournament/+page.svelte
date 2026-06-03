@@ -241,6 +241,7 @@
 	.gwrap {
 		display: grid;
 		gap: 0.85rem;
+		align-items: start;
 	}
 	@media (min-width: 760px) {
 		.gwrap {
