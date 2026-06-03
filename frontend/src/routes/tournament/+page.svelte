@@ -243,6 +243,9 @@
 		gap: 0.85rem;
 		align-items: start;
 	}
+	.gwrap > .grp {
+		margin-top: 0;
+	}
 	@media (min-width: 760px) {
 		.gwrap {
 			grid-template-columns: 1fr 1fr;

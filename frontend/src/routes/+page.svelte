@@ -742,10 +742,9 @@
 				{@const leagueLb = leaderboards[lg.id] ?? []}
 				{@const meRow = leagueLb.find((r) => r.userId === auth.user?.id)}
 				{@const rankNum = meRow ? leagueLb.findIndex((r) => r.userId === auth.user?.id) + 1 : 0}
-				{@const medal = rankNum === 1 ? '🥇' : rankNum === 2 ? '🥈' : rankNum === 3 ? '🥉' : `#${rankNum}`}
 				<a href={`/leagues/${lg.id}`} class="hero-chip league-pill" class:mobile-hide={leagues.length > 1 && lg.id !== activeLeague?.id}>
 					<span>{lg.name}</span>
-					{#if meRow && rankNum > 0}<b>{medal}</b>{/if}
+					{#if meRow && rankNum > 0}<b>#{rankNum}</b>{/if}
 				</a>
 			{/each}
 		{/if}
@@ -2079,8 +2078,27 @@
 		font-weight: 800;
 		color: var(--accent);
 	}
+	.hero-chip.league-pill {
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.28rem 0.38rem 0.28rem 0.72rem;
+	}
+	.hero-chip.league-pill span {
+		font-size: 0.68rem;
+		letter-spacing: 0.09em;
+		text-transform: uppercase;
+	}
 	.hero-chip.league-pill b {
+		display: grid;
+		place-items: center;
+		min-width: 2rem;
+		height: 2rem;
+		padding-inline: 0.42rem;
+		border-radius: var(--radius-pill);
+		background: var(--surface-2);
 		color: var(--text);
+		font-size: 0.92rem;
+		box-shadow: inset 0 0 0 1px var(--border);
 	}
 	.hero-chip.error-pill {
 		border: 1px solid color-mix(in srgb, var(--warning) 42%, var(--border));
@@ -3458,6 +3476,11 @@
 	}
 	:global(:root[data-theme='worldcup']) .hero-chip b {
 		color: var(--gold);
+	}
+	:global(:root[data-theme='worldcup']) .hero-chip.league-pill b {
+		background: rgba(7, 16, 25, 0.72);
+		color: var(--gold);
+		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold) 22%, transparent);
 	}
 	:global(:root[data-theme='worldcup']) .hero-chip.points-pill {
 		border-color: rgba(232, 197, 116, 0.58);
