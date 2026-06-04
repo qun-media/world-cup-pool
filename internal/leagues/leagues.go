@@ -280,6 +280,7 @@ func Register(app core.App, se *core.ServeEvent) {
 		league.Set("name", name)
 		league.Set("inviteCode", code)
 		league.Set("owner", e.Auth.Id)
+		league.Set("hideForecast", true)
 		if def != nil {
 			league.Set("scoringConfig", def.Id)
 		}
