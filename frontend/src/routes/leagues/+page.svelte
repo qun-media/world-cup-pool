@@ -106,7 +106,6 @@
 						</span>
 						<span class="league-meta">
 							<span><Users size={14} /> {league.members} {league.members === 1 ? 'member' : 'members'}</span>
-							{#if league.inviteCode !== 'GLOBAL'}<span>Code {league.inviteCode}</span>{/if}
 						</span>
 					</span>
 					<span class="go"><ArrowRight size={18} /></span>
