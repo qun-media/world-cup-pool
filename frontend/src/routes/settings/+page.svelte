@@ -160,7 +160,7 @@
 			</div>
 
 			<div class="pc-crest" aria-hidden="true">
-				<span>VM</span>
+				<span>WC</span>
 				<small>26</small>
 			</div>
 		</div>
