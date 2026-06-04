@@ -310,7 +310,6 @@
 		margin: 0 -1rem;
 		padding: 0.6rem 1rem 0.75rem;
 		background: var(--bg);
-		border-bottom: 1px solid var(--border);
 	}
 	.stickyhead h1 {
 		margin: 0.1rem 0 0;
