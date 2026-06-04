@@ -997,6 +997,9 @@
 		padding: 0.4rem 0;
 		border-bottom: 1px solid var(--border);
 	}
+	ul.leg li:last-child {
+		border-bottom: none;
+	}
 	ul.leg li span {
 		flex: 1;
 	}
