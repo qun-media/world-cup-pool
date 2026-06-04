@@ -67,8 +67,8 @@
 		<div class="invite-title">
 			<span class="invite-icon"><Mail size={18} /></span>
 			<div>
-				<p class="kicker">League invite</p>
-				<h2 id="pending-invites-title">Pending invites</h2>
+				<p class="kicker">League invite{visibleInvites.length > 1 ? 's' : ''}</p>
+				<h2 id="pending-invites-title">You have been invited{visibleInvites.length > 1 ? ` to ${visibleInvites.length} leagues` : ''}</h2>
 			</div>
 		</div>
 
@@ -111,12 +111,13 @@
 	.pending-invites {
 		display: grid;
 		gap: 0.85rem;
-		border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
-		background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+		border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+		background: color-mix(in srgb, var(--accent) 7%, var(--surface));
 	}
 	.home-tile {
 		grid-column: 1 / -1;
-		min-height: 160px;
+		min-height: 0;
+		border-left: 4px solid var(--accent);
 	}
 	.invite-title {
 		display: flex;

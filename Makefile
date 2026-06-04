@@ -1,4 +1,6 @@
-.PHONY: help install dev-frontend dev-backend build-frontend build run docker clean test docker-test docker-dev stop-test
+GHCR_IMAGE := ghcr.io/qun-media/world-cup-pool
+
+.PHONY: help install dev-frontend dev-backend build-frontend build run docker docker-push clean test docker-test docker-dev stop-test
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  %-16s %s\n", $$1, $$2}'
@@ -26,8 +28,15 @@ run: build ## Build then run the single binary on isolated :8091
 test: ## Run Go tests
 	go test ./...
 
-docker: ## Build the production Docker image
+docker: ## Build the production Docker image (native arch)
 	docker build -t wm-pickems:latest .
+
+docker-push: ## Build linux/amd64 image and push to ghcr.io/qun-media/world-cup-pool
+	docker buildx build \
+		--platform linux/amd64 \
+		--tag $(GHCR_IMAGE):latest \
+		--push \
+		.
 
 docker-test: ## Run isolated test Docker app on :8091 (never fhun_tips / :8090)
 	powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/start-test.ps1

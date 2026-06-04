@@ -76,6 +76,10 @@
 	let inviteError = $state('');
 	let settingsBusy = $state(false);
 	let settingsError = $state('');
+	let renameName = $state('');
+	let renameBusy = $state(false);
+	let renameError = $state('');
+	let renameSuccess = $state(false);
 
 	$effect(() => {
 		const lid = id;
@@ -87,6 +91,9 @@
 		pendingInvites = [];
 		inviteError = '';
 		settingsError = '';
+		renameName = '';
+		renameError = '';
+		renameSuccess = false;
 		Promise.all([api.leaderboard(lid), api.myLeagues()])
 			.then(([lb, mine]) => {
 				league = lb.league;
@@ -108,14 +115,15 @@
 	$effect(() => {
 		const lid = id;
 		const q = inviteQuery.trim();
-		if (!inviteAdmin || q.length < 2) {
+		if (!inviteAdmin) {
 			inviteCandidates = [];
 			inviteSearchBusy = false;
 			return;
 		}
+		inviteSearchBusy = true;
 		let cancelled = false;
+		const delay = q.length === 0 ? 0 : 220;
 		const timer = setTimeout(() => {
-			inviteSearchBusy = true;
 			api.inviteCandidates(lid, q)
 				.then((result) => {
 					if (!cancelled) inviteCandidates = result.users;
@@ -126,10 +134,11 @@
 				.finally(() => {
 					if (!cancelled) inviteSearchBusy = false;
 				});
-		}, 220);
+		}, delay);
 		return () => {
 			cancelled = true;
 			clearTimeout(timer);
+			inviteSearchBusy = false;
 		};
 	});
 
@@ -174,6 +183,24 @@
 			settingsError = 'Could not save settings.';
 		} finally {
 			settingsBusy = false;
+		}
+	}
+
+	async function renameLeague() {
+		if (!league || !renameName.trim()) return;
+		renameBusy = true;
+		renameError = '';
+		renameSuccess = false;
+		try {
+			await api.updateLeagueSettings(league.id, { name: renameName.trim() });
+			league = { ...league, name: renameName.trim() };
+			renameName = '';
+			renameSuccess = true;
+			setTimeout(() => (renameSuccess = false), 2500);
+		} catch {
+			renameError = 'Could not rename the league.';
+		} finally {
+			renameBusy = false;
 		}
 	}
 
@@ -412,17 +439,15 @@
 					<input
 						class="input"
 						bind:value={inviteQuery}
-						placeholder="Name or email"
+						placeholder="Name"
 						autocomplete="off"
 					/>
 				</span>
 			</label>
 
-			{#if inviteQuery.trim().length > 0 && inviteQuery.trim().length < 2}
-				<p class="muted small invite-note">Type at least 2 characters.</p>
-			{:else if inviteSearchBusy}
+			{#if inviteSearchBusy}
 				<p class="muted small invite-note">Searching...</p>
-			{:else if inviteQuery.trim().length >= 2 && inviteCandidates.length === 0}
+			{:else if !inviteSearchBusy && inviteCandidates.length === 0}
 				<p class="muted small invite-note">No available users found.</p>
 			{/if}
 
@@ -433,7 +458,6 @@
 							<Avatar name={candidate.name} src={candidate.avatarUrl} size={38} />
 							<span class="candidate-main">
 								<b>{candidate.name}</b>
-								{#if candidate.email}<i>{candidate.email}</i>{/if}
 							</span>
 							<button
 								class="btn secondary invite-person"
@@ -455,7 +479,6 @@
 							<Avatar name={pending.invitedUser.name} src={pending.invitedUser.avatarUrl} size={34} />
 							<span>
 								<b>{pending.invitedUser.name}</b>
-								{#if pending.invitedUser.email}<i>{pending.invitedUser.email}</i>{/if}
 							</span>
 							<em>{inviteDate(pending.created)}</em>
 						</div>
@@ -491,7 +514,32 @@
 			</label>
 
 			{#if settingsError}<p class="error">{settingsError}</p>{/if}
-		</section>
+
+		{#if invite !== 'GLOBAL'}
+			<div class="rename-row">
+				<label class="field rename-field">
+					<span class="muted small">Rename league</span>
+					<div class="rename-input-row">
+						<input
+							class="input"
+							bind:value={renameName}
+							placeholder={league.name}
+							maxlength={80}
+						/>
+						<button
+							class="btn secondary"
+							disabled={renameBusy || !renameName.trim()}
+							onclick={renameLeague}
+						>
+							{renameBusy ? 'Saving…' : 'Rename'}
+						</button>
+					</div>
+				</label>
+				{#if renameError}<p class="error">{renameError}</p>{/if}
+				{#if renameSuccess}<p class="success-msg">League renamed.</p>{/if}
+			</div>
+		{/if}
+	</section>
 	{/if}
 
 	{#if role === 'owner' && invite !== 'GLOBAL'}
@@ -653,8 +701,6 @@
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
-	.candidate-main i,
-	.pending-row i,
 	.pending-row em {
 		color: var(--muted);
 		font-size: 0.78rem;
@@ -672,6 +718,33 @@
 	}
 	.settings-zone h3 {
 		margin: 0 0 1rem;
+	}
+	.rename-row {
+		margin-top: 1rem;
+		padding-top: 1rem;
+		border-top: 1px solid var(--border);
+		display: grid;
+		gap: 0.35rem;
+	}
+	.rename-field {
+		display: grid;
+		gap: 0.35rem;
+	}
+	.rename-input-row {
+		display: flex;
+		gap: 0.5rem;
+	}
+	.rename-input-row .input {
+		flex: 1;
+	}
+	.rename-input-row .btn {
+		flex: none;
+		width: auto;
+	}
+	.success-msg {
+		color: var(--success);
+		font-size: 0.85rem;
+		margin: 0;
 	}
 	.toggle-row {
 		display: flex;

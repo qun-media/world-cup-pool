@@ -22,7 +22,6 @@ export interface LeagueSummary {
 export interface LeagueInviteUser {
 	id: string;
 	name: string;
-	email?: string;
 	avatarUrl: string | null;
 }
 
@@ -194,7 +193,7 @@ export const api = {
 		),
 	declineLeagueInvitation: (inviteId: string) =>
 		post<void>(`/api/leagues/invitations/${inviteId}/decline`, {}),
-	updateLeagueSettings: (id: string, settings: { hideForecast?: boolean }) =>
+	updateLeagueSettings: (id: string, settings: { hideForecast?: boolean; name?: string }) =>
 		pb.send(`/api/leagues/${id}/settings`, { method: 'PATCH', body: settings }),
 	chatOverview: () => get<{ items: ChatOverviewItem[] }>('/api/chat/overview'),
 	leaderboard: (id: string) =>

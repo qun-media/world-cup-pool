@@ -348,7 +348,8 @@ func Register(app core.App, se *core.ServeEvent) {
 			return bad(e, http.StatusForbidden, "not authorized to manage this league")
 		}
 		var body struct {
-			HideForecast *bool `json:"hideForecast"`
+			HideForecast *bool   `json:"hideForecast"`
+			Name         *string `json:"name"`
 		}
 		if err := e.BindBody(&body); err != nil {
 			return bad(e, http.StatusBadRequest, err.Error())
@@ -356,11 +357,19 @@ func Register(app core.App, se *core.ServeEvent) {
 		if body.HideForecast != nil {
 			league.Set("hideForecast", *body.HideForecast)
 		}
+		if body.Name != nil {
+			name := strings.TrimSpace(*body.Name)
+			if name == "" {
+				return bad(e, http.StatusBadRequest, "name cannot be empty")
+			}
+			league.Set("name", name)
+		}
 		if err := app.Save(league); err != nil {
 			return err
 		}
 		return e.JSON(http.StatusOK, map[string]any{
 			"id":           league.Id,
+			"name":         league.GetString("name"),
 			"hideForecast": league.GetBool("hideForecast"),
 		})
 	})
@@ -400,9 +409,6 @@ func Register(app core.App, se *core.ServeEvent) {
 			return err
 		}
 		q := strings.ToLower(strings.TrimSpace(e.Request.URL.Query().Get("q")))
-		if len([]rune(q)) < 2 {
-			return e.JSON(http.StatusOK, map[string]any{"users": []inviteUserDTO{}})
-		}
 
 		memberIDs, err := leagueMemberIDs(app, leagueID)
 		if err != nil {
@@ -417,8 +423,8 @@ func Register(app core.App, se *core.ServeEvent) {
 			return err
 		}
 		sort.SliceStable(users, func(i, j int) bool {
-			ai := strings.ToLower(strings.TrimSpace(users[i].GetString("name") + " " + users[i].GetString("email")))
-			aj := strings.ToLower(strings.TrimSpace(users[j].GetString("name") + " " + users[j].GetString("email")))
+			ai := strings.ToLower(strings.TrimSpace(users[i].GetString("name")))
+			aj := strings.ToLower(strings.TrimSpace(users[j].GetString("name")))
 			return ai < aj
 		})
 		out := make([]inviteUserDTO, 0, 12)
@@ -429,9 +435,9 @@ func Register(app core.App, se *core.ServeEvent) {
 			if user.Id == e.Auth.Id || memberIDs[user.Id] || pendingIDs[user.Id] || isBotUser(user) {
 				continue
 			}
-			haystack := strings.ToLower(user.GetString("name") + " " + user.GetString("email"))
+			haystack := strings.ToLower(user.GetString("name"))
 			if strings.Contains(haystack, q) {
-				out = append(out, inviteUserInfo(user, true))
+				out = append(out, inviteUserInfo(user, false))
 			}
 		}
 		return e.JSON(http.StatusOK, map[string]any{"users": out})
@@ -451,7 +457,7 @@ func Register(app core.App, se *core.ServeEvent) {
 		}
 		out := make([]leagueInviteDTO, 0, len(recs))
 		for _, rec := range recs {
-			item, err := leagueInviteInfo(app, rec, true)
+			item, err := leagueInviteInfo(app, rec, false)
 			if err != nil {
 				continue
 			}
@@ -506,7 +512,7 @@ func Register(app core.App, se *core.ServeEvent) {
 		if err := app.Save(invite); err != nil {
 			return err
 		}
-		item, err := leagueInviteInfo(app, invite, true)
+		item, err := leagueInviteInfo(app, invite, false)
 		if err != nil {
 			return err
 		}
