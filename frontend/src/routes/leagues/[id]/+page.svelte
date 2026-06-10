@@ -341,7 +341,7 @@
 										<Telescope size={15} />
 									</a>
 								{/if}
-								{#if isAdmin && invite !== 'GLOBAL'}
+								{#if isAdmin}
 									<button
 										class="paid-toggle"
 										class:active={r.paid}
