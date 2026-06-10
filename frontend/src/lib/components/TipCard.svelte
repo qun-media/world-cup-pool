@@ -330,7 +330,7 @@
 	{#if bodyVisible}
 		<div class="body">
 			{#if isKO && !resolved}
-					<p class="muted">{t.tipCard.loading}</p>
+					<p class="muted">{t.tipCard.pendingKO}</p>
 			{:else if locked}
 				{#if played && advancedName}
 					<p class="resline muted">

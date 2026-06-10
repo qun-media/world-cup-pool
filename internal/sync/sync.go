@@ -319,7 +319,10 @@ func APICheck(ctx context.Context, app core.App, client *football.Client, yr int
 		return nil, err
 	}
 
-	teams, _ := app.FindRecordsByFilter("teams", "id != ''", "", 0, 0)
+	teams, err := app.FindRecordsByFilter("teams", "id != ''", "", 0, 0)
+	if err != nil {
+		return nil, fmt.Errorf("load teams: %w", err)
+	}
 	seedCanon := map[string]string{} // canonName -> seeded display name
 	teamName := map[string]string{}  // teamId -> canonName
 	for _, t := range teams {
@@ -328,7 +331,10 @@ func APICheck(ctx context.Context, app core.App, client *football.Client, yr int
 		teamName[t.Id] = c
 	}
 
-	matches, _ := app.FindRecordsByFilter("matches", "id != ''", "kickoff", 0, 0)
+	matches, err := app.FindRecordsByFilter("matches", "id != ''", "kickoff", 0, 0)
+	if err != nil {
+		return nil, fmt.Errorf("load matches: %w", err)
+	}
 	byPair := map[string]*core.Record{}
 	for _, m := range matches {
 		h, a := teamName[m.GetString("homeTeam")], teamName[m.GetString("awayTeam")]

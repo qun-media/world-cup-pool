@@ -136,13 +136,8 @@ func requireInviteManager(app core.App, e *core.RequestEvent, leagueID string) (
 	if league.GetString("inviteCode") == GlobalInviteCode {
 		return nil, bad(e, http.StatusForbidden, "global league cannot be invited to")
 	}
-	if !isAppSuperuser(app, e.Auth) {
-		return nil, bad(e, http.StatusForbidden, "admin access required")
-	}
-	if _, err := app.FindFirstRecordByFilter("league_members",
-		"league = {:l} && user = {:u}",
-		map[string]any{"l": leagueID, "u": e.Auth.Id}); err != nil {
-		return nil, bad(e, http.StatusForbidden, "not a member of this league")
+	if !canManageLeague(app, e.Auth, league) {
+		return nil, bad(e, http.StatusForbidden, "not authorized to manage this league")
 	}
 	return league, nil
 }
@@ -314,6 +309,13 @@ func Register(app core.App, se *core.ServeEvent) {
 			return e.JSON(http.StatusOK, map[string]any{"id": league.Id, "name": league.GetString("name"), "already": true})
 		}
 		if err := addMember(app, league.Id, e.Auth.Id, "member"); err != nil {
+			// A concurrent join may have inserted the membership between the
+			// check above and here; treat that as success rather than a 500.
+			if existing, _ := app.FindFirstRecordByFilter("league_members",
+				"league = {:l} && user = {:u}",
+				map[string]any{"l": league.Id, "u": e.Auth.Id}); existing != nil {
+				return e.JSON(http.StatusOK, map[string]any{"id": league.Id, "name": league.GetString("name"), "already": true})
+			}
 			return err
 		}
 		return e.JSON(http.StatusOK, map[string]any{"id": league.Id, "name": league.GetString("name")})
@@ -629,6 +631,36 @@ func Register(app core.App, se *core.ServeEvent) {
 			lb["isAdmin"] = canManageLeague(app, e.Auth, lg)
 		}
 		return e.JSON(http.StatusOK, lb)
+	})
+
+	// PATCH /api/leagues/{id}/members/{userId}/paid
+	g.PATCH("/{id}/members/{userId}/paid", func(e *core.RequestEvent) error {
+		id := e.Request.PathValue("id")
+		targetUID := e.Request.PathValue("userId")
+		lg, err := app.FindRecordById("leagues", id)
+		if err != nil {
+			return bad(e, http.StatusNotFound, "league not found")
+		}
+		if !canManageLeague(app, e.Auth, lg) {
+			return bad(e, http.StatusForbidden, "not an admin of this league")
+		}
+		var body struct {
+			Paid bool `json:"paid"`
+		}
+		if err := e.BindBody(&body); err != nil {
+			return bad(e, http.StatusBadRequest, "invalid body")
+		}
+		member, err := app.FindFirstRecordByFilter("league_members",
+			"league = {:l} && user = {:u}",
+			map[string]any{"l": id, "u": targetUID})
+		if err != nil {
+			return bad(e, http.StatusNotFound, "member not found")
+		}
+		member.Set("paid", body.Paid)
+		if err := app.Save(member); err != nil {
+			return bad(e, http.StatusInternalServerError, "could not save")
+		}
+		return e.JSON(http.StatusOK, map[string]any{"paid": body.Paid})
 	})
 
 	// GET /api/leagues/{id}/progress

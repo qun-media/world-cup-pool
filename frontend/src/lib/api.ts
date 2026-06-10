@@ -8,6 +8,12 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 async function get<T>(path: string): Promise<T> {
 	return pb.send(path, { method: 'GET' });
 }
+async function patch<T>(path: string, body: unknown): Promise<T> {
+	return pb.send(path, { method: 'PATCH', body });
+}
+async function del<T>(path: string): Promise<T> {
+	return pb.send(path, { method: 'DELETE' });
+}
 
 export interface LeagueSummary {
 	id: string;
@@ -50,6 +56,7 @@ export interface LeaderboardRow {
 	gdDeviation: number;
 	forecast?: Record<string, number>;
 	rankDelta: number; // +N = moved up N spots since last matchday, 0 = no change or no data
+	paid?: boolean;
 }
 
 export interface ChatOverviewUser {
@@ -169,7 +176,7 @@ export const api = {
 			'/api/leagues/join',
 			{ code }
 		),
-	deleteLeague: (id: string) => pb.send(`/api/leagues/${id}`, { method: 'DELETE' }),
+	deleteLeague: (id: string) => del<void>(`/api/leagues/${id}`),
 	// Public — resolves an invite code to a league name for the /join page.
 	invitePreview: (code: string) =>
 		get<{ id: string; name: string }>(
@@ -194,7 +201,7 @@ export const api = {
 	declineLeagueInvitation: (inviteId: string) =>
 		post<void>(`/api/leagues/invitations/${inviteId}/decline`, {}),
 	updateLeagueSettings: (id: string, settings: { hideForecast?: boolean; name?: string }) =>
-		pb.send(`/api/leagues/${id}/settings`, { method: 'PATCH', body: settings }),
+		patch<unknown>(`/api/leagues/${id}/settings`, settings),
 	chatOverview: () => get<{ items: ChatOverviewItem[] }>('/api/chat/overview'),
 	leaderboard: (id: string) =>
 		get<{
@@ -209,4 +216,6 @@ export const api = {
 	playerStats: () => get<PlayerStats>('/api/player/me/stats'),
 	matchCrowd: (matchId: string) =>
 		get<CrowdDistribution>(`/api/tips/crowd/${matchId}`),
+	setMemberPaid: (leagueId: string, userId: string, paid: boolean) =>
+		patch<{ paid: boolean }>(`/api/leagues/${leagueId}/members/${userId}/paid`, { paid }),
 };

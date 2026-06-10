@@ -42,7 +42,7 @@ func ResolveBracket(app core.App) error {
 		}
 	}
 
-	first, second, thirds := groupStandings(matches)
+	first, second, thirds, thirdTeam := groupStandings(matches)
 
 	// Resolve the 8 R32 third-slots. With all 8 best thirds known, use FIFA's
 	// official Annex C table; otherwise fall back to a deterministic greedy
@@ -171,10 +171,6 @@ func ResolveBracket(app core.App) error {
 	return nil
 }
 
-// thirdTeam maps a group letter to that group's third-placed team id; filled
-// by groupStandings and read by the greedy best-third allocation above.
-var thirdTeam = map[string]string{}
-
 type standing struct {
 	group string
 	team  string
@@ -182,13 +178,16 @@ type standing struct {
 
 // groupStandings computes, from finished group matches only, the 1st/2nd team
 // id per group letter (only when that group's 6 matches are all finished) plus
-// the globally ranked list of the best third-placed teams (top 8). It delegates
-// the FIFA tiebreaker order (including head-to-head) to internal/standings so
-// bracket resolution and Forecast scoring always agree, and logs any group that
-// needed a non-official tiebreak so an admin can verify/override.
-func groupStandings(matches []*core.Record) (first, second map[string]string, thirds []standing) {
+// the globally ranked list of the best third-placed teams (top 8) and a
+// group-letter -> third-placed team id map (thirdTeam, used by the best-third
+// allocation in ResolveBracket). It delegates the FIFA tiebreaker order
+// (including head-to-head) to internal/standings so bracket resolution and
+// Forecast scoring always agree, and logs any group that needed a non-official
+// tiebreak so an admin can verify/override.
+func groupStandings(matches []*core.Record) (first, second map[string]string, thirds []standing, thirdTeam map[string]string) {
 	first = map[string]string{}
 	second = map[string]string{}
+	thirdTeam = map[string]string{}
 
 	order, ranked, ambiguous := standings.GroupTables(standings.FromRecords(matches))
 	for g, ids := range order {
@@ -197,11 +196,8 @@ func groupStandings(matches []*core.Record) (first, second map[string]string, th
 			second[g] = ids[1]
 		}
 	}
-	thirdTeam = map[string]string{}
 	for _, r := range ranked {
 		thirdTeam[r.Group] = r.TeamID
-	}
-	for _, r := range ranked {
 		thirds = append(thirds, standing{group: r.Group, team: r.TeamID})
 	}
 	if len(thirds) > 8 {
@@ -210,5 +206,5 @@ func groupStandings(matches []*core.Record) (first, second map[string]string, th
 	if len(ambiguous) > 0 {
 		log.Printf("[sync] group ranking needed a non-official tiebreak (fair play / lots) for %v — verify and override if needed", ambiguous)
 	}
-	return first, second, thirds
+	return first, second, thirds, thirdTeam
 }

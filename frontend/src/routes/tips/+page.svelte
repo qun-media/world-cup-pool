@@ -15,16 +15,23 @@
 		label: string;
 		matches: Match[];
 	};
-	type Tab = 'missing' | 'all' | 'group' | 'ko';
+	type Tab = 'upcoming' | 'missing' | 'group' | 'ko';
 
-	let tab = $state<Tab>('missing');
+	let tab = $state<Tab>('upcoming');
+	let showPast = $state(false);
 	let requestedTab = $derived.by<Tab | ''>(() => {
 		const raw = ($page.url.searchParams.get('tab') ?? '').trim().toLowerCase();
-		if (raw === 'missing' || raw === 'all' || raw === 'group' || raw === 'ko') {
+		// 'all' is the old name for the upcoming tab; keep legacy links working.
+		if (raw === 'all') return 'upcoming';
+		if (raw === 'upcoming' || raw === 'missing' || raw === 'group' || raw === 'ko') {
 			return raw;
 		}
 		return '';
 	});
+	// Legacy ?tab=all also showed past matches; preserve that for old links.
+	let legacyShowAll = $derived(
+		($page.url.searchParams.get('tab') ?? '').trim().toLowerCase() === 'all'
+	);
 	let searchMatchId = $derived($page.url.searchParams.get('match') ?? '');
 	let searchTeamId = $derived($page.url.searchParams.get('team') ?? '');
 	let searchGroupId = $derived(
@@ -46,6 +53,7 @@
 			await goto('/tips', { replaceState: true, noScroll: true });
 		}
 		tab = newTab;
+		showPast = false;
 	}
 
 	$effect(() => {
@@ -55,14 +63,20 @@
 		if (requestedTab) {
 			if (tab !== requestedTab) {
 				tab = requestedTab;
+				showPast = false;
 			}
+			if (legacyShowAll) showPast = true;
 			return;
 		}
 		if (searchGroupId && tab !== 'group') {
 			tab = 'group';
+			showPast = false;
 			return;
 		}
-		if ((searchMatchId || searchTeamId) && tab !== 'all') tab = 'all';
+		if ((searchMatchId || searchTeamId) && tab !== 'upcoming') {
+			tab = 'upcoming';
+			showPast = true;
+		}
 	});
 
 	let filtered = $derived(
@@ -71,7 +85,7 @@
 				return teamsResolved(m) && !isLocked(m) && !tipsStore.tips[m.id];
 			if (tab === 'group') return m.stage === 'group';
 			if (tab === 'ko') return m.stage !== 'group';
-			return true;
+			return true; // upcoming: all matches; visibleSections handles past hiding
 		})
 	);
 	let missingOpenMatches = $derived(
@@ -80,6 +94,13 @@
 		)
 	);
 	let nextMissingMatch = $derived(missingOpenMatches[0]);
+
+	// Count of past matches for the upcoming tab's unhide button label.
+	let pastCount = $derived.by(() => {
+		if (tab !== 'upcoming') return 0;
+		const now = serverClock.now();
+		return tipsStore.matches.filter((m) => new Date(m.kickoff).getTime() < now).length;
+	});
 
 	function deadlineLabel(iso: string) {
 		return new Date(iso).toLocaleString('en-US', {
@@ -106,7 +127,7 @@
 		return filtered.find((m) => new Date(m.kickoff).getTime() >= now)?.id ?? '';
 	});
 	let showAllDivider = $derived(
-		tab === 'all' && !!firstUpcomingId && filtered[0]?.id !== firstUpcomingId
+		tab === 'upcoming' && showPast && !!firstUpcomingId && filtered[0]?.id !== firstUpcomingId
 	);
 
 	function goNow() {
@@ -170,6 +191,18 @@
 		}));
 	});
 
+	// On the upcoming tab with showPast=false, hide sections that are entirely in the past.
+	let visibleSections = $derived.by<Section[]>(() => {
+		if (tab !== 'upcoming' || showPast) return sections;
+		const now = serverClock.now();
+		return sections
+			.map((s) => ({
+				...s,
+				matches: s.matches.filter((m) => new Date(m.kickoff).getTime() >= now)
+			}))
+			.filter((s) => s.matches.length > 0);
+	});
+
 	let nowDayIndex = $derived(
 		sections.findIndex((section) => section.matches.some((m) => m.id === nowId))
 	);
@@ -213,7 +246,7 @@
 		const ready = sections.some((section) => section.matches.some((match) => match.id === target));
 		if (
 			!tipsStore.loaded ||
-			(tab !== 'all' && tab !== 'missing') ||
+			(tab !== 'upcoming' && tab !== 'missing') ||
 			!target ||
 			!ready ||
 			key === lastSearchJump
@@ -268,15 +301,17 @@
 		</div>
 	</div>
 	<div class="tabs">
+		<button class:active={tab === 'upcoming'} onclick={() => selectTab('upcoming')}
+			>Upcoming</button
+		>
 		<button class:active={tab === 'missing'} onclick={() => selectTab('missing')}
 			>Missing</button
 		>
-		<button class:active={tab === 'all'} onclick={() => selectTab('all')}>All</button>
 		<button class:active={tab === 'group'} onclick={() => selectTab('group')}
 			>Groups</button
 		>
 		<button class:active={tab === 'ko'} onclick={() => selectTab('ko')}
-			>Knockout</button
+			>Bracket</button
 		>
 	</div>
 </div>
@@ -308,14 +343,19 @@
 		</p>
 		{#if tab === 'missing'}
 			<div class="empty-actions">
-				<button class="empty-link" onclick={() => selectTab('all')}>
+				<button class="empty-link" onclick={() => selectTab('upcoming')}>
 					View all matches
 				</button>
 			</div>
 		{/if}
 	</div>
 {:else}
-	{#each sections as section (section.id)}
+	{#if tab === 'upcoming' && pastCount > 0}
+		<button class="past-toggle muted small" onclick={() => (showPast = !showPast)}>
+			{showPast ? 'Hide past matches' : `Unhide past matches (${pastCount})`}
+		</button>
+	{/if}
+	{#each visibleSections as section (section.id)}
 		<h3 class="day" class:spotlight={section.id === searchGroupSectionId} id={section.id}>
 			{section.label}
 		</h3>
@@ -354,6 +394,14 @@
 {/if}
 
 <style>
+	.past-toggle {
+		all: unset;
+		cursor: pointer;
+		display: block;
+		margin: 0.6rem 0 0.2rem;
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
 	.stickyhead {
 		position: sticky;
 		top: var(--topbar-h);

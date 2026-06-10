@@ -118,6 +118,7 @@ export const strings = {
 		noFriendTips: 'No friends have picked this match.',
 		saved: 'Saved',
 		loading: 'Saving…',
+		pendingKO: 'Games pending until the group stage is complete',
 		stageGroup: 'Group',
 		stageOther: 'Round',
 		day: 'Today',

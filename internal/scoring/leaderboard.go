@@ -34,6 +34,7 @@ type Row struct {
 	// Forecast correct-pick counts (groups/advance/champion + R32..FINAL).
 	Forecast  map[string]int `json:"forecast"`
 	RankDelta int            `json:"rankDelta"` // +N = moved up N spots since last matchday, 0 = unchanged/no data
+	Paid      bool           `json:"paid"`      // admin-managed entry fee tracker
 	lastEdit  string         // earliest-wins; not serialized
 	prevTotal int            // for delta computation only, not serialized
 }
@@ -88,7 +89,7 @@ func Leaderboard(app core.App, leagueID string) (map[string]any, error) {
 		if err != nil {
 			continue
 		}
-		row := Row{UserID: uid, Name: u.GetString("name"), AvatarURL: avatarURL(u)}
+		row := Row{UserID: uid, Name: u.GetString("name"), AvatarURL: avatarURL(u), Paid: m.GetBool("paid")}
 
 		ms, _ := app.FindRecordsByFilter("match_scores",
 			"user = {:u} && config = {:c}", "", 0, 0,

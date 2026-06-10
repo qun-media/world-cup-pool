@@ -204,6 +204,15 @@
 		}
 	}
 
+	async function togglePaid(userId: string, current: boolean) {
+		try {
+			await api.setMemberPaid(id, userId, !current);
+			rows = rows.map((r) => (r.userId === userId ? { ...r, paid: !current } : r));
+		} catch {
+			// silently ignore — paid state stays as-is
+		}
+	}
+
 	async function deleteLeague() {
 		if (!league || deleteConfirm.trim() !== league.name.trim()) return;
 		deleteBusy = true;
@@ -331,6 +340,14 @@
 									>
 										<Telescope size={15} />
 									</a>
+								{/if}
+								{#if isAdmin && invite !== 'GLOBAL'}
+									<button
+										class="paid-toggle"
+										class:active={r.paid}
+										title={r.paid ? 'Mark as unpaid' : 'Mark as paid'}
+										onclick={(e) => { e.stopPropagation(); togglePaid(r.userId, r.paid ?? false); }}
+									>💲</button>
 								{/if}
 								<ChevronDown size={14} class="rx" />
 							</div>
@@ -614,6 +631,17 @@
 {/if}
 
 <style>
+	.paid-toggle {
+		all: unset;
+		cursor: pointer;
+		font-size: 1rem;
+		line-height: 1;
+		opacity: 0.2;
+		transition: opacity 0.15s;
+	}
+	.paid-toggle.active {
+		opacity: 1;
+	}
 	.back {
 		display: inline-block;
 		margin: 0.5rem 0 0.75rem;
