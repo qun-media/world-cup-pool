@@ -348,6 +348,8 @@
 										title={r.paid ? 'Mark as unpaid' : 'Mark as paid'}
 										onclick={(e) => { e.stopPropagation(); togglePaid(r.userId, r.paid ?? false); }}
 									>💲</button>
+								{:else if r.paid}
+									<span class="paid-toggle active view" title="Paid">💲</span>
 								{/if}
 								<ChevronDown size={14} class="rx" />
 							</div>
@@ -641,6 +643,9 @@
 	}
 	.paid-toggle.active {
 		opacity: 1;
+	}
+	.paid-toggle.view {
+		cursor: default;
 	}
 	.back {
 		display: inline-block;
