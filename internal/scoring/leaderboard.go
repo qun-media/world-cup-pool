@@ -20,23 +20,24 @@ func avatarURL(user *core.Record) *string {
 
 // Row is one player's standing in a League.
 type Row struct {
-	UserID         string `json:"userId"`
-	Name           string `json:"name"`
+	UserID         string  `json:"userId"`
+	Name           string  `json:"name"`
 	AvatarURL      *string `json:"avatarUrl"`
-	Total          int    `json:"total"`
-	TipsPoints     int    `json:"tipsPoints"`
-	ForecastPoints int    `json:"forecastPoints"`
-	Predicted      int    `json:"predicted"` // # matches the user has tipped
+	Total          int     `json:"total"`
+	TipsPoints     int     `json:"tipsPoints"`
+	ForecastPoints int     `json:"forecastPoints"`
+	Predicted      int     `json:"predicted"` // # matches the user has tipped
 	// Tiebreakers (also returned for transparency).
 	ExactScores    int `json:"exactScores"`
 	CorrectWinners int `json:"correctWinners"`
 	GdDeviation    int `json:"gdDeviation"`
 	// Forecast correct-pick counts (groups/advance/champion + R32..FINAL).
-	Forecast  map[string]int `json:"forecast"`
-	RankDelta int            `json:"rankDelta"` // +N = moved up N spots since last matchday, 0 = unchanged/no data
-	Paid      bool           `json:"paid"`      // admin-managed entry fee tracker
-	lastEdit  string         // earliest-wins; not serialized
-	prevTotal int            // for delta computation only, not serialized
+	Forecast         map[string]int `json:"forecast"`
+	RankDelta        int            `json:"rankDelta"`        // +N = moved up N spots since last matchday, 0 = unchanged/no data
+	Paid             bool           `json:"paid"`             // admin-managed entry fee tracker
+	ForecastUnlocked bool           `json:"forecastUnlocked"` // admin re-opened this member's Forecast after lock
+	lastEdit         string         // earliest-wins; not serialized
+	prevTotal        int            // for delta computation only, not serialized
 }
 
 // Leaderboard builds a League's standings using its scoring config and the
@@ -89,7 +90,7 @@ func Leaderboard(app core.App, leagueID string) (map[string]any, error) {
 		if err != nil {
 			continue
 		}
-		row := Row{UserID: uid, Name: u.GetString("name"), AvatarURL: avatarURL(u), Paid: m.GetBool("paid")}
+		row := Row{UserID: uid, Name: u.GetString("name"), AvatarURL: avatarURL(u), Paid: m.GetBool("paid"), ForecastUnlocked: m.GetBool("forecastUnlocked")}
 
 		ms, _ := app.FindRecordsByFilter("match_scores",
 			"user = {:u} && config = {:c}", "", 0, 0,

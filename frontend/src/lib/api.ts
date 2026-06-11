@@ -57,6 +57,7 @@ export interface LeaderboardRow {
 	forecast?: Record<string, number>;
 	rankDelta: number; // +N = moved up N spots since last matchday, 0 = no change or no data
 	paid?: boolean;
+	forecastUnlocked?: boolean;
 }
 
 export interface ChatOverviewUser {
@@ -210,6 +211,7 @@ export const api = {
 			scoring?: Record<string, unknown>;
 			hideForecast?: boolean;
 			isAdmin?: boolean;
+			forecastLocked?: boolean;
 		}>(`/api/leagues/${id}/leaderboard`),
 	leagueProgress: (id: string) =>
 		get<LeagueProgress>(`/api/leagues/${id}/progress`),
@@ -218,4 +220,9 @@ export const api = {
 		get<CrowdDistribution>(`/api/tips/crowd/${matchId}`),
 	setMemberPaid: (leagueId: string, userId: string, paid: boolean) =>
 		patch<{ paid: boolean }>(`/api/leagues/${leagueId}/members/${userId}/paid`, { paid }),
+	setMemberForecastUnlock: (leagueId: string, userId: string, unlocked: boolean) =>
+		patch<{ forecastUnlocked: boolean }>(
+			`/api/leagues/${leagueId}/members/${userId}/forecast-unlock`,
+			{ unlocked }
+		),
 };

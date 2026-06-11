@@ -17,6 +17,7 @@ import (
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 
+	"github.com/oyvhov/world-cup-pool/internal/forecast"
 	"github.com/oyvhov/world-cup-pool/internal/scoring"
 )
 
@@ -629,6 +630,9 @@ func Register(app core.App, se *core.ServeEvent) {
 			}
 			lb["hideForecast"] = lg.GetBool("hideForecast")
 			lb["isAdmin"] = canManageLeague(app, e.Auth, lg)
+			// Surface the global Forecast lock so admins only see the
+			// per-member "unlock forecast" control once it's relevant.
+			lb["forecastLocked"] = forecast.Locked(app)
 		}
 		return e.JSON(http.StatusOK, lb)
 	})
@@ -661,6 +665,39 @@ func Register(app core.App, se *core.ServeEvent) {
 			return bad(e, http.StatusInternalServerError, "could not save")
 		}
 		return e.JSON(http.StatusOK, map[string]any{"paid": body.Paid})
+	})
+
+	// PATCH /api/leagues/{id}/members/{userId}/forecast-unlock
+	// Lets a league admin temporarily re-open a member's Forecast after the
+	// tournament has locked it. The Forecast is one record per user, so the
+	// unlock applies to that user everywhere they play.
+	g.PATCH("/{id}/members/{userId}/forecast-unlock", func(e *core.RequestEvent) error {
+		id := e.Request.PathValue("id")
+		targetUID := e.Request.PathValue("userId")
+		lg, err := app.FindRecordById("leagues", id)
+		if err != nil {
+			return bad(e, http.StatusNotFound, "league not found")
+		}
+		if !canManageLeague(app, e.Auth, lg) {
+			return bad(e, http.StatusForbidden, "not an admin of this league")
+		}
+		var body struct {
+			Unlocked bool `json:"unlocked"`
+		}
+		if err := e.BindBody(&body); err != nil {
+			return bad(e, http.StatusBadRequest, "invalid body")
+		}
+		member, err := app.FindFirstRecordByFilter("league_members",
+			"league = {:l} && user = {:u}",
+			map[string]any{"l": id, "u": targetUID})
+		if err != nil {
+			return bad(e, http.StatusNotFound, "member not found")
+		}
+		member.Set("forecastUnlocked", body.Unlocked)
+		if err := app.Save(member); err != nil {
+			return bad(e, http.StatusInternalServerError, "could not save")
+		}
+		return e.JSON(http.StatusOK, map[string]any{"forecastUnlocked": body.Unlocked})
 	})
 
 	// GET /api/leagues/{id}/progress

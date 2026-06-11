@@ -36,7 +36,7 @@
 			fs.thirds,
 			fs.bracket
 		]);
-		if (!fs.loaded || fs.locked) return;
+		if (!fs.loaded || !fs.editable) return;
 		if (!primed) {
 			primed = true; // skip the initial hydrate
 			return;
@@ -98,7 +98,8 @@
 			<h1>Forecast</h1>
 			<p class="muted desc">
 				Your Forecast for groups, best thirds, and the road to the final.
-				{#if fs.locked}<b>Locked.</b
+				{#if fs.unlocked}<b>Unlocked by an admin — you can edit.</b
+						>{:else if fs.locked}<b>Locked.</b
 						>{:else}Locks at kickoff.{/if}
 			</p>
 				{#if !fs.locked && fs.tournamentStart}
@@ -124,7 +125,9 @@
 {#if !fs.loaded}
 	<p class="muted">Loading…</p>
 {:else}
-	{#if fs.locked}
+	{#if fs.unlocked}
+		<div class="card lockbar unlocked"><Lock size={16} /> An admin unlocked your Forecast — finish your picks. Changes save automatically.</div>
+	{:else if fs.locked}
 		<div class="card lockbar"><Lock size={16} /> The tournament has started - the Forecast is final.</div>
 	{/if}
 
@@ -178,7 +181,7 @@
 								{:else if i < 2}<span class="pill ok">through</span>
 								{:else if i === 2}<span class="pill">3rd place</span>{/if}
 						</span>
-						{#if !fs.locked}
+						{#if fs.editable}
 							<span class="ord">
 								<button aria-label="Move up" disabled={i === 0} onclick={() => { fs.move(g.letter, i, -1); vibrate(15); }}><ChevronUp size={16} /></button>
 								<button aria-label="Move down" disabled={i === 3} onclick={() => { fs.move(g.letter, i, 1); vibrate(15); }}><ChevronDown size={16} /></button>
@@ -206,7 +209,7 @@
 					<input
 						type="checkbox"
 						checked={on}
-						disabled={fs.locked ||
+						disabled={!fs.editable ||
 							(!on && fs.chosenThirdLetters.length >= 8)}
 						onchange={() => fs.toggleThird(g.letter)}
 					/>
@@ -250,7 +253,7 @@
 					<button
 						class="bteam"
 						class:win={w && w === H.id}
-						disabled={fs.locked || !H.id}
+						disabled={!fs.editable || !H.id}
 						onclick={() => fs.pick(m, H.id)}
 					>
 						{#if H.team}<Flag iso2={H.team.iso2} code={H.team.fifaCode} />{/if}
@@ -260,7 +263,7 @@
 					<button
 						class="bteam"
 						class:win={w && w === A.id}
-						disabled={fs.locked || !A.id}
+						disabled={!fs.editable || !A.id}
 						onclick={() => fs.pick(m, A.id)}
 					>
 						{#if A.team}<Flag iso2={A.team.iso2} code={A.team.fifaCode} />{/if}
@@ -273,7 +276,7 @@
 		{/each}
 	{/if}
 
-	{#if !fs.locked}
+	{#if fs.editable}
 		<div class="savebar">
 			<span class="savestat" class:err={saveState === 'error'}>
 				{#if saveState === 'saving'}
@@ -302,6 +305,9 @@
 		align-items: center;
 		gap: 0.5rem;
 		color: var(--warning);
+	}
+	.lockbar.unlocked {
+		color: var(--accent);
 	}
 	.stickyhead {
 		position: sticky;

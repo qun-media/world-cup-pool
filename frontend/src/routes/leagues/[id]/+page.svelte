@@ -58,6 +58,7 @@
 	let league = $state<{ id: string; name: string } | null>(null);
 	let role = $state('');
 	let isAdmin = $state(false);
+	let forecastLocked = $state(false);
 	let hideForecast = $state(false);
 	let rows = $state<LeaderboardRow[]>([]);
 	let invite = $state('');
@@ -101,6 +102,7 @@
 				cfg = (lb.scoring as Cfg | undefined) ?? null;
 				hideForecast = lb.hideForecast ?? false;
 				isAdmin = lb.isAdmin ?? false;
+				forecastLocked = lb.forecastLocked ?? false;
 				const mineLeague = mine.leagues.find((l) => l.id === lid);
 				invite = mineLeague?.inviteCode ?? '';
 				role = mineLeague?.role ?? '';
@@ -210,6 +212,17 @@
 			rows = rows.map((r) => (r.userId === userId ? { ...r, paid: !current } : r));
 		} catch {
 			// silently ignore — paid state stays as-is
+		}
+	}
+
+	async function toggleForecastUnlock(userId: string, current: boolean) {
+		try {
+			await api.setMemberForecastUnlock(id, userId, !current);
+			rows = rows.map((r) =>
+				r.userId === userId ? { ...r, forecastUnlocked: !current } : r
+			);
+		} catch {
+			// silently ignore — unlock state stays as-is
 		}
 	}
 
@@ -350,6 +363,16 @@
 									>💲</button>
 								{:else if r.paid}
 									<span class="paid-toggle active view" title="Paid">💲</span>
+								{/if}
+								{#if isAdmin && forecastLocked}
+									<button
+										class="unlock-toggle"
+										class:active={r.forecastUnlocked}
+										title={r.forecastUnlocked
+											? 'Lock Forecast again'
+											: 'Unlock Forecast for this member'}
+										onclick={(e) => { e.stopPropagation(); toggleForecastUnlock(r.userId, r.forecastUnlocked ?? false); }}
+									>🔓</button>
 								{/if}
 								<ChevronDown size={14} class="rx" />
 							</div>
@@ -646,6 +669,17 @@
 	}
 	.paid-toggle.view {
 		cursor: default;
+	}
+	.unlock-toggle {
+		all: unset;
+		cursor: pointer;
+		font-size: 1rem;
+		line-height: 1;
+		opacity: 0.2;
+		transition: opacity 0.15s;
+	}
+	.unlock-toggle.active {
+		opacity: 1;
 	}
 	.back {
 		display: inline-block;

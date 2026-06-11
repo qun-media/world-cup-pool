@@ -28,6 +28,9 @@ export function koKey(m: { num: number; stage: string }): string {
 export class ForecastStore {
 	loaded = $state(false);
 	locked = $state(false);
+	/** True when an admin has re-opened this user's Forecast after the global
+	 *  lock. When set, editing is allowed even though `locked` is true. */
+	unlocked = $state(false);
 	tournamentStart = $state<string>('');
 	teams = $state<Record<string, Team>>({});
 	groups = $state<GroupDef[]>([]);
@@ -69,6 +72,7 @@ export class ForecastStore {
 			thirdTable?: Record<string, Record<string, string>>;
 			tournamentStart: string;
 			locked: boolean;
+			unlocked?: boolean;
 		};
 		let teams: Team[];
 		let matches: Match[] | unknown[];
@@ -121,6 +125,13 @@ export class ForecastStore {
 		this.thirdTable = structure.thirdTable ?? {};
 		this.tournamentStart = structure.tournamentStart;
 		this.locked = structure.locked;
+		this.unlocked = structure.unlocked ?? false;
+	}
+
+	/** Whether the user may currently edit their Forecast: before the global
+	 *  lock, or after it when an admin has unlocked them. */
+	get editable(): boolean {
+		return !this.locked || this.unlocked;
 	}
 
 	// Sets the editable prediction from a forecast-like record (or undefined),

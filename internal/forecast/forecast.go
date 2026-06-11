@@ -16,6 +16,7 @@ import (
 
 	"github.com/oyvhov/world-cup-pool/internal/bracket"
 	"github.com/oyvhov/world-cup-pool/internal/clock"
+	"github.com/oyvhov/world-cup-pool/internal/scoring"
 )
 
 // tournamentStart returns the earliest match kickoff (the global Forecast
@@ -38,6 +39,24 @@ func locked(app core.App) bool {
 
 func isLocked(now, start time.Time) bool {
 	return !now.Before(start)
+}
+
+// Locked reports whether the global Forecast deadline (first kickoff) has
+// passed. Exported so leagues can decide when to surface the admin
+// "unlock forecast" control.
+func Locked(app core.App) bool { return locked(app) }
+
+// userUnlocked reports whether any league admin has flagged this user's
+// membership as forecastUnlocked, temporarily re-opening their Forecast. The
+// Forecast is a single per-user record, so an unlock granted in any league
+// applies everywhere.
+func userUnlocked(app core.App, userID string) bool {
+	if userID == "" {
+		return false
+	}
+	_, err := app.FindFirstRecordByFilter("league_members",
+		"user = {:u} && forecastUnlocked = true", map[string]any{"u": userID})
+	return err == nil
 }
 
 // groupTeams returns letter -> set(teamId) from tournament_groups.
@@ -72,7 +91,7 @@ func validate(app core.App, rec *core.Record) error {
 	if bypass.Load() {
 		return nil
 	}
-	if locked(app) {
+	if locked(app) && !userUnlocked(app, rec.GetString("user")) {
 		return apis.NewBadRequestError("the tournament has started — the Forecast is locked", nil)
 	}
 	groups, err := groupTeams(app)
@@ -154,6 +173,21 @@ func Register(app core.App, se *core.ServeEvent) {
 		}
 		return e.Next()
 	})
+
+	// When a Forecast is saved after the global lock (only possible for an
+	// admin-unlocked member), recompute so the leaderboard reflects any
+	// changed picks for matches that may already be scored. Pre-lock autosaves
+	// are skipped — results don't exist yet, so there's nothing to refresh.
+	recomputeIfLocked := func(e *core.RecordEvent) error {
+		if locked(e.App) {
+			if err := scoring.Recompute(e.App); err != nil {
+				log.Printf("[forecast] recompute after unlocked save: %v", err)
+			}
+		}
+		return e.Next()
+	}
+	app.OnRecordAfterUpdateSuccess("forecasts").BindFunc(recomputeIfLocked)
+	app.OnRecordAfterCreateSuccess("forecasts").BindFunc(recomputeIfLocked)
 
 	// GET /api/forecast/of/{userId} — a friend's Forecast. Visible to anyone
 	// who shares a League with them (no lock gate: in a friends group you
@@ -249,6 +283,7 @@ func Register(app core.App, se *core.ServeEvent) {
 			"thirdTable":      bracket.Table(),
 			"tournamentStart": ts,
 			"locked":          locked(app),
+			"unlocked":        locked(app) && userUnlocked(app, e.Auth.Id),
 		})
 	}).Bind(apis.RequireAuth())
 }
