@@ -16,8 +16,6 @@
 	import OddsBadge from './OddsBadge.svelte';
 	import { api, type CrowdDistribution } from '$lib/api';
 
-	const FRIENDS_PREVIEW_COUNT = 10;
-
 	let { match }: { match: Match } = $props();
 
 	let locked = $derived(isLocked(match));
@@ -164,7 +162,6 @@
 	// Friends' picks (only available after kickoff) — toggles open/closed.
 	let friends = $state<FriendTip[] | null>(null);
 	let friendsBusy = $state(false);
-	let showAllFriends = $state(false);
 	let sortedFriends = $derived.by<FriendTip[]>(() => {
 		const rows = [...(friends ?? [])];
 		rows.sort((left, right) => {
@@ -174,25 +171,16 @@
 		});
 		return rows;
 	});
-	let hiddenFriendsCount = $derived(
-		Math.max(sortedFriends.length - FRIENDS_PREVIEW_COUNT, 0)
-	);
-	let visibleFriends = $derived(
-		showAllFriends ? sortedFriends : sortedFriends.slice(0, FRIENDS_PREVIEW_COUNT)
-	);
 	async function toggleFriends() {
 		if (friends !== null) {
 			friends = null;
-			showAllFriends = false;
 			return;
 		}
 		friendsBusy = true;
 		try {
 			friends = await tipsStore.friends(match.id);
-			showAllFriends = false;
 		} catch {
 			friends = [];
-			showAllFriends = false;
 		} finally {
 			friendsBusy = false;
 		}
@@ -382,7 +370,7 @@
 								</tr>
 							</thead>
 							<tbody>
-								{#each visibleFriends as f (f.userId)}
+								{#each sortedFriends as f (f.userId)}
 									<tr class:fme={f.isMe}>
 										<td class="fname">{f.name}</td>
 										<td class="ftip">
@@ -404,17 +392,6 @@
 								{/each}
 							</tbody>
 						</table>
-						{#if sortedFriends.length > FRIENDS_PREVIEW_COUNT}
-							<div class="friends-actions">
-								<button class="btn secondary morefriends" onclick={() => (showAllFriends = !showAllFriends)}>
-									{#if showAllFriends}
-										Show fewer
-									{:else}
-										Show {hiddenFriendsCount} more
-									{/if}
-								</button>
-							</div>
-						{/if}
 					{/if}
 				{/if}
 				{#if crowdReady && crowd?.outcomes}
@@ -884,14 +861,6 @@
 	}
 	.fok { color: var(--accent); }
 	.fperfect { color: var(--gold); }
-	.friends-actions {
-		display: flex;
-		justify-content: center;
-		margin-top: 0.7rem;
-	}
-	.morefriends {
-		min-width: 9.5rem;
-	}
 	.crowd {
 		margin-top: 0.85rem;
 		padding-top: 0.7rem;

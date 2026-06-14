@@ -17,8 +17,11 @@
 	};
 	type Tab = 'upcoming' | 'missing' | 'group' | 'ko';
 
+	const PAST_PREVIEW_COUNT = 3;
+
 	let tab = $state<Tab>('upcoming');
 	let showPast = $state(false);
+	let showAllPast = $state(false);
 	let requestedTab = $derived.by<Tab | ''>(() => {
 		const raw = ($page.url.searchParams.get('tab') ?? '').trim().toLowerCase();
 		// 'all' is the old name for the upcoming tab; keep legacy links working.
@@ -54,6 +57,7 @@
 		}
 		tab = newTab;
 		showPast = false;
+		showAllPast = false;
 	}
 
 	$effect(() => {
@@ -64,18 +68,24 @@
 			if (tab !== requestedTab) {
 				tab = requestedTab;
 				showPast = false;
+				showAllPast = false;
 			}
-			if (legacyShowAll) showPast = true;
+			if (legacyShowAll) {
+				showPast = true;
+				showAllPast = true;
+			}
 			return;
 		}
 		if (searchGroupId && tab !== 'group') {
 			tab = 'group';
 			showPast = false;
+			showAllPast = false;
 			return;
 		}
 		if ((searchMatchId || searchTeamId) && tab !== 'upcoming') {
 			tab = 'upcoming';
 			showPast = true;
+			showAllPast = true;
 		}
 	});
 
@@ -95,12 +105,18 @@
 	);
 	let nextMissingMatch = $derived(missingOpenMatches[0]);
 
-	// Count of past matches for the upcoming tab's unhide button label.
-	let pastCount = $derived.by(() => {
-		if (tab !== 'upcoming') return 0;
+	// Past matches for the upcoming tab, newest first (latest game on top).
+	let pastMatchesDesc = $derived.by<Match[]>(() => {
+		if (tab !== 'upcoming') return [];
 		const now = serverClock.now();
-		return tipsStore.matches.filter((m) => new Date(m.kickoff).getTime() < now).length;
+		return tipsStore.matches
+			.filter((m) => new Date(m.kickoff).getTime() < now)
+			.sort((a, b) => new Date(b.kickoff).getTime() - new Date(a.kickoff).getTime());
 	});
+	let pastCount = $derived(pastMatchesDesc.length);
+	let visiblePastMatches = $derived(
+		showAllPast ? pastMatchesDesc : pastMatchesDesc.slice(0, PAST_PREVIEW_COUNT)
+	);
 
 	function deadlineLabel(iso: string) {
 		return new Date(iso).toLocaleString('en-US', {
@@ -122,14 +138,6 @@
 		);
 		return (next ?? filtered[filtered.length - 1])?.id ?? '';
 	});
-	let firstUpcomingId = $derived.by(() => {
-		const now = serverClock.now();
-		return filtered.find((m) => new Date(m.kickoff).getTime() >= now)?.id ?? '';
-	});
-	let showAllDivider = $derived(
-		tab === 'upcoming' && showPast && !!firstUpcomingId && filtered[0]?.id !== firstUpcomingId
-	);
-
 	function goNow() {
 		// Scroll to the day-header of the day holding the "now" match —
 		// nicer context, and days hold only a handful of games.
@@ -191,9 +199,10 @@
 		}));
 	});
 
-	// On the upcoming tab with showPast=false, hide sections that are entirely in the past.
+	// On the upcoming tab, sections only ever hold upcoming matches — past
+	// matches are shown separately (newest first) via the unhide control.
 	let visibleSections = $derived.by<Section[]>(() => {
-		if (tab !== 'upcoming' || showPast) return sections;
+		if (tab !== 'upcoming') return sections;
 		const now = serverClock.now();
 		return sections
 			.map((s) => ({
@@ -351,29 +360,47 @@
 	</div>
 {:else}
 	{#if tab === 'upcoming' && pastCount > 0}
-		<button class="past-toggle muted small" onclick={() => (showPast = !showPast)}>
+		<button
+			class="past-toggle muted small"
+			onclick={() => {
+				showPast = !showPast;
+				if (!showPast) showAllPast = false;
+			}}
+		>
 			{showPast ? 'Hide past matches' : `Unhide past matches (${pastCount})`}
 		</button>
+	{/if}
+	{#if tab === 'upcoming' && showPast && pastCount > 0}
+		<h3 class="day">Past matches</h3>
+		{#each visiblePastMatches as m (m.id)}
+			<div
+				class="match"
+				class:spotlight={m.id === searchTargetId ||
+					(!!searchTeamId && (m.homeTeam === searchTeamId || m.awayTeam === searchTeamId))}
+				id={`match-${m.id}`}
+			>
+				<TipCard match={m} />
+			</div>
+		{/each}
+		{#if pastCount > PAST_PREVIEW_COUNT && !showAllPast}
+			<button class="past-toggle muted small" onclick={() => (showAllPast = true)}>
+				Show all past matches ({pastCount})
+			</button>
+		{/if}
+		<div class="now-divider-wrap" role="separator" aria-label="Where the tournament is now">
+			<div class="now-divider">
+				<span class="line"></span>
+				<span class="badge"><LocateFixed size={14} /> Where we are now</span>
+				<span class="line"></span>
+			</div>
+			<p class="now-hint">Upcoming matches below</p>
+		</div>
 	{/if}
 	{#each visibleSections as section (section.id)}
 		<h3 class="day" class:spotlight={section.id === searchGroupSectionId} id={section.id}>
 			{section.label}
 		</h3>
 		{#each section.matches as m (m.id)}
-			{#if showAllDivider && m.id === firstUpcomingId}
-				<div
-					class="now-divider-wrap"
-					role="separator"
-					aria-label="Where the tournament is now"
-				>
-					<div class="now-divider">
-						<span class="line"></span>
-						<span class="badge"><LocateFixed size={14} /> Where we are now</span>
-						<span class="line"></span>
-					</div>
-					<p class="now-hint">Upcoming matches below</p>
-				</div>
-			{/if}
 			<div
 				class="match"
 				class:spotlight={m.id === searchTargetId ||
