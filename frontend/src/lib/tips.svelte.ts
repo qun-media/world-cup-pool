@@ -194,6 +194,31 @@ class TipsStore {
 		});
 		return r.tips ?? [];
 	}
+
+	/** Like friends(), but also returns the match's current score/status so a
+	 *  live view can show fresh score + projected points from one call. */
+	async friendsLive(matchId: string): Promise<LiveTipsResult> {
+		const r = await pb.send(`/api/tips/others/${matchId}`, {
+			method: 'GET'
+		});
+		return { tips: r.tips ?? [], match: r.match ?? null };
+	}
+}
+
+export interface LiveMatchScore {
+	ftHome: number;
+	ftAway: number;
+	etHome: number;
+	etAway: number;
+	penHome: number;
+	penAway: number;
+	status: string;
+	finalizedAt: string;
+}
+
+export interface LiveTipsResult {
+	tips: FriendTip[];
+	match: LiveMatchScore | null;
 }
 
 export const tipsStore = new TipsStore();

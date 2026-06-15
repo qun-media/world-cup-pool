@@ -15,7 +15,40 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 
 	"github.com/oyvhov/world-cup-pool/internal/clock"
+	"github.com/oyvhov/world-cup-pool/internal/scoring"
 )
+
+// Live windows: how long after kickoff a match is still considered "in
+// progress" for the live panel. Generous so a match that runs long isn't
+// dropped before its final score lands. Mirrors the buffers in internal/sync.
+const (
+	groupLiveWindow    = 150 * time.Minute // 90' + half-time + stoppage buffer
+	knockoutLiveWindow = 210 * time.Minute // + extra time + penalties
+)
+
+func liveWindow(stage string) time.Duration {
+	if stage == "group" {
+		return groupLiveWindow
+	}
+	return knockoutLiveWindow
+}
+
+// isLiveNow reports whether a match should appear on the live panel: not yet
+// finalized and either flagged live by the provider or inside its post-kickoff
+// window.
+func isLiveNow(m *core.Record, now time.Time) bool {
+	if m.GetString("finalizedAt") != "" {
+		return false
+	}
+	if m.GetString("status") == "live" {
+		return true
+	}
+	ko := matchKickoff(m)
+	if ko.IsZero() {
+		return false
+	}
+	return !now.Before(ko) && now.Before(ko.Add(liveWindow(m.GetString("stage"))))
+}
 
 func matchKickoff(m *core.Record) time.Time {
 	return m.GetDateTime("kickoff").Time()
@@ -150,6 +183,51 @@ func Register(app core.App, se *core.ServeEvent) {
 		return e.JSON(http.StatusOK, map[string]any{"scores": out})
 	}).Bind(apis.RequireAuth())
 
+	// GET /api/live — matches in progress right now, with their current score
+	// from our DB (no external call). Each match carries myPoints: the
+	// signed-in user's projected points at the current score (null = no tip).
+	// Used by the dashboard live panel; polled every ~60s.
+	se.Router.GET("/api/live", func(e *core.RequestEvent) error {
+		now := clock.Now(app)
+		matches, err := app.FindRecordsByFilter("matches",
+			"finalizedAt = '' && status != 'postponed' && status != 'cancelled'",
+			"kickoff", 0, 0)
+		if err != nil {
+			return err
+		}
+		def, _ := app.FindFirstRecordByFilter("scoring_configs", "isDefault = true")
+		var cfg scoring.Config
+		if def != nil {
+			cfg = scoring.LoadConfig(def)
+		}
+		out := make([]map[string]any, 0, 4)
+		for _, m := range matches {
+			if !isLiveNow(m, now) {
+				continue
+			}
+			info := matchScoreInfo(m)
+			info["id"] = m.Id
+			info["stage"] = m.GetString("stage")
+			info["groupLetter"] = m.GetString("groupLetter")
+			info["num"] = m.GetInt("num")
+			info["kickoff"] = m.GetString("kickoff")
+			info["homeTeam"] = m.GetString("homeTeam")
+			info["awayTeam"] = m.GetString("awayTeam")
+			info["homeLabel"] = m.GetString("homeLabel")
+			info["awayLabel"] = m.GetString("awayLabel")
+			info["myPoints"] = nil
+			if def != nil {
+				if tip, err := app.FindFirstRecordByFilter("tips",
+					"user = {:u} && match = {:m}",
+					map[string]any{"u": e.Auth.Id, "m": m.Id}); err == nil {
+					info["myPoints"] = scoring.ScoreTipPoints(cfg, m, tip)
+				}
+			}
+			out = append(out, info)
+		}
+		return e.JSON(http.StatusOK, map[string]any{"matches": out})
+	}).Bind(apis.RequireAuth())
+
 	// GET /api/tips/others/{matchId} — all league members' Tips for a match,
 	// but only after kickoff. The requesting user's own tip is included first
 	// (isMe: true). Each row includes the points earned under the default config.
@@ -164,19 +242,20 @@ func Register(app core.App, se *core.ServeEvent) {
 			return e.JSON(http.StatusOK, map[string]any{"locked": false, "tips": []any{}})
 		}
 
-		// Default scoring config for points display.
+		// Projected points use the default config, scored against the match's
+		// CURRENT score. For a live match this is "points if it ended now"; for
+		// a finished match it equals the awarded default-config points. This is
+		// read-only — nothing is persisted, so the league table is untouched.
 		def, _ := app.FindFirstRecordByFilter("scoring_configs", "isDefault = true")
-		pointsFor := func(uid string) int {
+		var cfg scoring.Config
+		if def != nil {
+			cfg = scoring.LoadConfig(def)
+		}
+		pointsFor := func(t *core.Record) int {
 			if def == nil {
 				return -1
 			}
-			s, err := app.FindFirstRecordByFilter("match_scores",
-				"user = {:u} && match = {:m} && config = {:c}",
-				map[string]any{"u": uid, "m": matchID, "c": def.Id})
-			if err != nil {
-				return -1
-			}
-			return s.GetInt("points")
+			return scoring.ScoreTipPoints(cfg, match, t)
 		}
 
 		coMembers, err := sharedLeagueUserIDs(app, e.Auth.Id)
@@ -211,7 +290,7 @@ func Register(app core.App, se *core.ServeEvent) {
 				"etAway":    t.GetInt("etAway"),
 				"penWinner": t.GetString("penWinner"),
 				"advancer":  t.GetString("advancer"),
-				"points":    pointsFor(uid),
+				"points":    pointsFor(t),
 			}
 			if isMe {
 				r := row
@@ -225,7 +304,11 @@ func Register(app core.App, se *core.ServeEvent) {
 			out = append(out, *myRow)
 		}
 		out = append(out, otherRows...)
-		return e.JSON(http.StatusOK, map[string]any{"locked": true, "tips": out})
+		return e.JSON(http.StatusOK, map[string]any{
+			"locked": true,
+			"tips":   out,
+			"match":  matchScoreInfo(match),
+		})
 	}).Bind(apis.RequireAuth())
 
 	// GET /api/tips/crowd/{matchId} — global tip distribution (Home/Draw/Away)
@@ -247,6 +330,21 @@ func Register(app core.App, se *core.ServeEvent) {
 		dist["locked"] = true
 		return e.JSON(http.StatusOK, dist)
 	}).Bind(apis.RequireAuth())
+}
+
+// matchScoreInfo is the current score/status snapshot of a match, shared by
+// /api/live and /api/tips/others so the live UI always reflects fresh values.
+func matchScoreInfo(m *core.Record) map[string]any {
+	return map[string]any{
+		"ftHome":      m.GetInt("ftHome"),
+		"ftAway":      m.GetInt("ftAway"),
+		"etHome":      m.GetInt("etHome"),
+		"etAway":      m.GetInt("etAway"),
+		"penHome":     m.GetInt("penHome"),
+		"penAway":     m.GetInt("penAway"),
+		"status":      m.GetString("status"),
+		"finalizedAt": m.GetString("finalizedAt"),
+	}
 }
 
 // crowdDistribution aggregates every tip for the given match into

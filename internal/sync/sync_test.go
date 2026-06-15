@@ -29,6 +29,28 @@ func testMatchRecord(stage string) *core.Record {
 	return record
 }
 
+func TestWc26InProgress(t *testing.T) {
+	tests := []struct {
+		name string
+		g    wc26Game
+		want bool
+	}{
+		{"not started", wc26Game{Finished: "FALSE", TimeElapsed: "notstarted"}, false},
+		{"finished", wc26Game{Finished: "TRUE", TimeElapsed: "finished"}, false},
+		{"first half", wc26Game{Finished: "FALSE", TimeElapsed: "45"}, true},
+		{"half time", wc26Game{Finished: "FALSE", TimeElapsed: "HT"}, true},
+		{"stoppage", wc26Game{Finished: "FALSE", TimeElapsed: "90+2"}, true},
+		{"empty elapsed", wc26Game{Finished: "FALSE", TimeElapsed: ""}, false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := tc.g.inProgress(); got != tc.want {
+				t.Fatalf("inProgress() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestApplyResultStoresFinishedGroupResult(t *testing.T) {
 	record := testMatchRecord("group")
 

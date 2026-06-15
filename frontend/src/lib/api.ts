@@ -25,6 +25,29 @@ export interface LeagueSummary {
 	isAdmin: boolean;
 }
 
+// A match currently in progress, as returned by /api/live. Carries the fresh
+// score from our DB plus the signed-in user's projected points at that score.
+export interface LiveMatch {
+	id: string;
+	stage: string;
+	groupLetter: string;
+	num: number;
+	kickoff: string;
+	homeTeam: string;
+	awayTeam: string;
+	homeLabel: string;
+	awayLabel: string;
+	ftHome: number;
+	ftAway: number;
+	etHome: number;
+	etAway: number;
+	penHome: number;
+	penAway: number;
+	status: string;
+	finalizedAt: string;
+	myPoints: number | null; // projected points at current score; null = no tip
+}
+
 export interface LeagueInviteUser {
 	id: string;
 	name: string;
@@ -218,6 +241,7 @@ export const api = {
 	playerStats: () => get<PlayerStats>('/api/player/me/stats'),
 	matchCrowd: (matchId: string) =>
 		get<CrowdDistribution>(`/api/tips/crowd/${matchId}`),
+	live: () => get<{ matches: LiveMatch[] }>('/api/live'),
 	setMemberPaid: (leagueId: string, userId: string, paid: boolean) =>
 		patch<{ paid: boolean }>(`/api/leagues/${leagueId}/members/${userId}/paid`, { paid }),
 	setMemberForecastUnlock: (leagueId: string, userId: string, unlocked: boolean) =>

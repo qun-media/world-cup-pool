@@ -23,6 +23,10 @@ import (
 // anyMatchEligible and the 100/day cap, so the true call rate is much lower.
 const cronExpr = "*/30 * * * *"
 
+// liveCronExpr fires every 3 minutes but only does work when a match is live
+// (gated by anyMatchLive), keeping the live panel's scores fresh.
+const liveCronExpr = "*/3 * * * *"
+
 const apiDailyLimit = 100
 
 // groupWait: 90 min regulation + 45 min buffer after kickoff.
@@ -59,6 +63,40 @@ func (d *dailyCounter) snapshot() (date string, count int) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	return d.date, d.count
+}
+
+// liveWindow: how long after kickoff a match is still considered in progress.
+// Generous so a long match isn't dropped before its final score lands.
+const (
+	groupLive    = 150 * time.Minute
+	knockoutLive = 210 * time.Minute
+)
+
+// anyMatchLive returns true when at least one unfinished match is inside its
+// post-kickoff live window. Gates the faster live-window sync so the cheap
+// catch-up cron stays idle when nothing is being played.
+func anyMatchLive(app core.App) bool {
+	now := time.Now().UTC()
+	matches, err := app.FindRecordsByFilter("matches",
+		"finalizedAt = '' && status != 'postponed' && status != 'cancelled'",
+		"kickoff", 0, 0)
+	if err != nil {
+		return false
+	}
+	for _, m := range matches {
+		kickoff := m.GetDateTime("kickoff").Time()
+		if kickoff.IsZero() {
+			continue
+		}
+		window := knockoutLive
+		if m.GetString("stage") == "group" {
+			window = groupLive
+		}
+		if !now.Before(kickoff) && now.Before(kickoff.Add(window)) {
+			return true
+		}
+	}
+	return false
 }
 
 // anyMatchEligible returns true when at least one unfinished match has passed
@@ -99,16 +137,17 @@ func anyMatchEligible(app core.App) bool {
 // before trusting the API-Football path — these are best-effort for the known
 // FIFA/provider naming differences among the 2026 participants.
 var nameAliases = map[string]string{
-	football.NormalizeName("Korea Republic"):              football.NormalizeName("South Korea"),
-	football.NormalizeName("Czechia"):                     football.NormalizeName("Czech Republic"),
-	football.NormalizeName("USA"):                         football.NormalizeName("United States"),
-	football.NormalizeName("IR Iran"):                     football.NormalizeName("Iran"),
-	football.NormalizeName("Bosnia and Herzegovina"):      football.NormalizeName("Bosnia & Herzegovina"),
-	football.NormalizeName("Côte d'Ivoire"):               football.NormalizeName("Ivory Coast"),
-	football.NormalizeName("Congo DR"):                    football.NormalizeName("DR Congo"),
-	football.NormalizeName("Democratic Republic of Congo"): football.NormalizeName("DR Congo"),
-	football.NormalizeName("Cape Verde Islands"):          football.NormalizeName("Cape Verde"),
-	football.NormalizeName("Türkiye"):                     football.NormalizeName("Turkey"),
+	football.NormalizeName("Korea Republic"):                   football.NormalizeName("South Korea"),
+	football.NormalizeName("Czechia"):                          football.NormalizeName("Czech Republic"),
+	football.NormalizeName("USA"):                              football.NormalizeName("United States"),
+	football.NormalizeName("IR Iran"):                          football.NormalizeName("Iran"),
+	football.NormalizeName("Bosnia and Herzegovina"):           football.NormalizeName("Bosnia & Herzegovina"),
+	football.NormalizeName("Côte d'Ivoire"):                    football.NormalizeName("Ivory Coast"),
+	football.NormalizeName("Congo DR"):                         football.NormalizeName("DR Congo"),
+	football.NormalizeName("Democratic Republic of Congo"):     football.NormalizeName("DR Congo"),
+	football.NormalizeName("Democratic Republic of the Congo"): football.NormalizeName("DR Congo"),
+	football.NormalizeName("Cape Verde Islands"):               football.NormalizeName("Cape Verde"),
+	football.NormalizeName("Türkiye"):                          football.NormalizeName("Turkey"),
 }
 
 func canonName(s string) string {
@@ -181,6 +220,33 @@ func Register(app core.App, se *core.ServeEvent) {
 			}
 		})
 		log.Printf("[sync] auto-sync enabled via %s (%s)", source, cronExpr)
+
+		// Faster cadence while a match is in progress so the live panel sees
+		// fresh scores (and final results land within minutes of full-time).
+		// Only fires when a match is actually live, so it costs nothing when
+		// idle — which also keeps the worldcup26 fetch to once per tick during
+		// live windows only.
+		app.Cron().MustAdd("results-sync-live", liveCronExpr, func() {
+			if !anyMatchLive(app) {
+				return
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			// In-progress scores from the community live feed (never finalizes).
+			if !wc26Disabled() {
+				if err := worldcup26LiveSync(ctx, app); err != nil {
+					log.Printf("[sync] worldcup26 live: %v", err)
+				}
+			}
+			// Authoritative finalizer. API-Football still respects the daily cap.
+			if isAPIFootball && !counter.increment() {
+				return
+			}
+			if err := run(ctx); err != nil {
+				log.Printf("[sync] live: %v", err)
+			}
+		})
+		log.Printf("[sync] live-window sync enabled (%s)", liveCronExpr)
 	} else {
 		log.Printf("[sync] no results source — manual override only")
 	}

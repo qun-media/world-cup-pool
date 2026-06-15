@@ -4,8 +4,9 @@
 	import { tick } from 'svelte';
 	import { auth } from '$lib/auth.svelte';
 	import { homeIntro } from '$lib/homeIntro.svelte';
-	import { api, type ChatOverviewItem, type LeagueProgress, type LeagueProgressEvent, type LeagueSummary, type LeaderboardRow } from '$lib/api';
+	import { api, type ChatOverviewItem, type LeagueProgress, type LeagueProgressEvent, type LeagueSummary, type LeaderboardRow, type LiveMatch } from '$lib/api';
 	import { searchNav } from '$lib/searchNav.svelte';
+	import { liveStore } from '$lib/live.svelte';
 	import { tipsStore, type Match, isLocked, teamsResolved } from '$lib/tips.svelte';
 	import { forecastStore as fs, koKey } from '$lib/forecast.svelte';
 	import { serverClock } from '$lib/serverclock.svelte';
@@ -102,6 +103,11 @@
 					leagueProgress = null;
 				}
 			});
+	});
+
+	$effect(() => {
+		if (!auth.isAuthed) return;
+		return liveStore.start();
 	});
 
 	$effect(() => {
@@ -449,7 +455,24 @@
 		);
 	}
 
-	let liveMatch = $derived(tipsStore.matches.find((m) => m.status === 'live') ?? null);
+	let liveMatches = $derived(liveStore.matches);
+	let liveMatch = $derived(
+		tipsStore.matches.find((m) => liveMatches.some((lm) => lm.id === m.id)) ?? null
+	);
+	function liveHref(id: string) {
+		return `/live/${id}`;
+	}
+	function liveScoreText(m: LiveMatch) {
+		let s = `${m.ftHome}–${m.ftAway}`;
+		if (m.etHome || m.etAway) s = `${m.etHome}–${m.etAway} aet`;
+		if (m.penHome || m.penAway) s += ` (${m.penHome}–${m.penAway} pens)`;
+		return s;
+	}
+	function liveTeamLabel(m: LiveMatch, side: 'h' | 'a') {
+		const id = side === 'h' ? m.homeTeam : m.awayTeam;
+		const label = side === 'h' ? m.homeLabel : m.awayLabel;
+		return teamDisplayName(team(id), label);
+	}
 	let latestResult = $derived(recentResults[0] ?? null);
 	let unreadChatItems = $derived(chatItems.filter((item) => item.unread > 0));
 	let recentResultWithPoints = $derived.by(() => {
@@ -891,6 +914,49 @@
 			{nowHero.label}
 		</a>
 	</section>
+
+	{#if liveMatches.length > 0}
+		<section class="card tile live-card home-span-primary">
+			<div class="hd">
+				<h3><span class="live-dot" aria-hidden="true"></span> Live now</h3>
+				<span class="hdlink as-text">{liveMatches.length === 1 ? '1 match' : `${liveMatches.length} matches`}</span>
+			</div>
+
+			<div class="live-list">
+				{#each liveMatches as m (m.id)}
+					<a class="live-item" href={liveHref(m.id)}>
+						<div class="live-item-top">
+							<span class="live-stage">{matchStageLabel(m)}</span>
+							<span class="live-badge">LIVE</span>
+						</div>
+						<div class="live-teams">
+							<span class="live-team">
+								{#if team(m.homeTeam)}
+									<Flag iso2={team(m.homeTeam)?.iso2 ?? ''} code={team(m.homeTeam)?.fifaCode ?? ''} size={20} />
+								{/if}
+								<b>{liveTeamLabel(m, 'h')}</b>
+							</span>
+							<strong class="live-score digits">{liveScoreText(m)}</strong>
+							<span class="live-team away">
+								<b>{liveTeamLabel(m, 'a')}</b>
+								{#if team(m.awayTeam)}
+									<Flag iso2={team(m.awayTeam)?.iso2 ?? ''} code={team(m.awayTeam)?.fifaCode ?? ''} size={20} />
+								{/if}
+							</span>
+						</div>
+						<div class="live-foot">
+							{#if m.myPoints !== null}
+								<span class="live-mypoints" class:plus={m.myPoints > 0}>{m.myPoints > 0 ? `+${m.myPoints}` : m.myPoints} pts so far</span>
+							{:else}
+								<span class="live-mypoints muted">No tip</span>
+							{/if}
+							<span class="live-cta">See friends' tips <ArrowUpRight size={14} /></span>
+						</div>
+					</a>
+				{/each}
+			</div>
+		</section>
+	{/if}
 
 	{#if !tournamentFinished && tournamentStarted && activeLeague && leagueProgress && leagueProgress.events.length > 0}
 		<section class="card tile progress-card home-span-support">
@@ -1364,6 +1430,123 @@
 		color: var(--accent);
 		white-space: nowrap;
 		font-weight: 600;
+	}
+	.tile .hdlink.as-text {
+		color: var(--muted);
+	}
+
+	/* ===== Live match panel ===== */
+	.live-card {
+		border-color: color-mix(in srgb, var(--danger, #e5484d) 45%, var(--border));
+		background: color-mix(in srgb, var(--danger, #e5484d) 4%, var(--surface));
+	}
+	.live-card .hd h3 {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45rem;
+	}
+	.live-dot {
+		width: 9px;
+		height: 9px;
+		border-radius: 50%;
+		background: var(--danger, #e5484d);
+		box-shadow: 0 0 0 0 color-mix(in srgb, var(--danger, #e5484d) 70%, transparent);
+		animation: live-pulse 1.6s ease-out infinite;
+	}
+	@keyframes live-pulse {
+		0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--danger, #e5484d) 60%, transparent); }
+		70% { box-shadow: 0 0 0 7px transparent; }
+		100% { box-shadow: 0 0 0 0 transparent; }
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.live-dot { animation: none; }
+	}
+	.live-list {
+		display: grid;
+		gap: 0.7rem;
+	}
+	.live-item {
+		display: grid;
+		gap: 0.55rem;
+		padding: 0.85rem 0.95rem;
+		border: 1px solid var(--border);
+		border-radius: var(--radius);
+		background: var(--surface);
+		color: var(--text);
+		transition: border-color 0.15s ease, transform 0.15s ease;
+	}
+	.live-item:hover {
+		border-color: color-mix(in srgb, var(--danger, #e5484d) 45%, var(--border));
+		transform: translateY(-1px);
+	}
+	.live-item-top {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+	}
+	.live-stage {
+		font-size: 0.78rem;
+		color: var(--muted);
+		font-weight: 600;
+	}
+	.live-badge {
+		font-size: 0.66rem;
+		font-weight: 800;
+		letter-spacing: 0.1em;
+		color: #fff;
+		background: var(--danger, #e5484d);
+		padding: 0.15rem 0.4rem;
+		border-radius: var(--radius-pill);
+	}
+	.live-teams {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+		align-items: center;
+		gap: 0.7rem;
+	}
+	.live-team {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		min-width: 0;
+	}
+	.live-team.away {
+		justify-content: flex-end;
+	}
+	.live-team b {
+		font-weight: 700;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.live-score {
+		font-size: 1.25rem;
+		font-weight: 800;
+		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
+	}
+	.live-foot {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		font-size: 0.82rem;
+	}
+	.live-mypoints {
+		font-weight: 700;
+		color: var(--muted);
+	}
+	.live-mypoints.plus {
+		color: var(--success);
+	}
+	.live-cta {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		color: var(--accent);
+		font-weight: 600;
+		white-space: nowrap;
 	}
 	.league-card-actions {
 		display: flex;

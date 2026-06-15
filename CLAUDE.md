@@ -42,7 +42,7 @@ Each subdirectory is a feature module that registers its own PocketBase hooks an
 - **leagues** — Private league lifecycle: create, join (by invite code), leaderboards, member management, direct invitations
 - **tips** — Match predictions locked at kickoff; crowdsourcing aggregation
 - **forecast** — Pre-tournament bracket/group predictions; locked once tournament starts
-- **sync** — Fetches match results from API-Football or openfootball; manual admin overrides
+- **sync** — Fetches match results from API-Football or openfootball; manual admin overrides. Live in-progress scores come from the free community worldcup26.ir API as a live-only updater (sets running score + `live` status, never finalizes), polled at most every 3 min and only while a match is being played
 - **standings** — Computes group standings and knockout bracket from results
 - **odds** — Syncs bookmaker odds from The Odds API; falls back to FIFA-ranking estimates
 - **account** — User deletion, personal stats
@@ -73,7 +73,8 @@ Key PocketBase collections (schema defined in `migrations/0001_init.go` + 16 fol
 |-----|---------|
 | `HTTP_PORT` | Listening port (default 8090) |
 | `WMP_DEV` | `1` enables dev-only endpoints and time simulation |
-| `RESULTS_SOURCE` | `auto` / `openfootball` / `apifootball` |
+| `RESULTS_SOURCE` | `auto` / `openfootball` / `apifootball` (authoritative final results) |
+| `WC26_LIVE` | `on` (default) / `off`; community worldcup26.ir live in-progress scores |
 | `API_FOOTBALL_KEY` | Optional; enables live result sync |
 | `ODDS_API_KEY` | Optional; enables bookmaker odds sync |
 | `PB_ADMIN_EMAIL` / `PB_ADMIN_PASSWORD` | Bootstrap admin account |

@@ -163,6 +163,18 @@ func scoreValues(cfg Config, m MatchResult, p TipPrediction) tipComponents {
 	return r
 }
 
+// LoadConfig exposes config parsing so other packages can score tips live
+// (e.g. projected points for an in-progress match) without persisting.
+func LoadConfig(rec *core.Record) Config { return loadConfig(rec) }
+
+// ScoreTipPoints scores a tip against a match record's CURRENT score under cfg
+// and returns the total points. Pure/read-only: it never writes match_scores,
+// so it is safe to call for live matches to show provisional points without
+// affecting the league table (which sums only finalized match_scores).
+func ScoreTipPoints(cfg Config, match, tip *core.Record) int {
+	return scoreTip(cfg, match, tip).points()
+}
+
 func scoreTip(cfg Config, match, tip *core.Record) tipComponents {
 	return scoreValues(cfg,
 		MatchResult{
