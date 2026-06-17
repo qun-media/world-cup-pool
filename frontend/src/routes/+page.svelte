@@ -456,9 +456,6 @@
 	}
 
 	let liveMatches = $derived(liveStore.matches);
-	let liveMatch = $derived(
-		tipsStore.matches.find((m) => liveMatches.some((lm) => lm.id === m.id)) ?? null
-	);
 	function liveHref(id: string) {
 		return `/live/${id}`;
 	}
@@ -522,17 +519,9 @@
 				deadlineLabel: 'Locks'
 			};
 		}
-		if (liveMatch) {
-			return {
-				tone: 'live',
-				kicker: 'Live now',
-				title: `${resultTeams(liveMatch)} is playing now`,
-				body: `${stageLabel(liveMatch)}${liveMatch.tvChannel ? ` · on TV` : ''}`,
-				href: matchTipHref(liveMatch),
-				label: 'View match',
-				match: liveMatch
-			};
-		}
+		// Live matches are surfaced by the dedicated "Live now" panel (which lists
+		// every in-progress match and links to its live page), so the action hero
+		// skips the live state to avoid showing a second, redundant live box.
 		if (tournamentFinished) {
 			return {
 				tone: 'done',
@@ -838,6 +827,49 @@
 
 	<PendingInvites homeTile />
 
+	{#if liveMatches.length > 0}
+		<section class="card tile live-card home-span-primary">
+			<div class="hd">
+				<h3><span class="live-dot" aria-hidden="true"></span> Live now</h3>
+				<span class="hdlink as-text">{liveMatches.length === 1 ? '1 match' : `${liveMatches.length} matches`}</span>
+			</div>
+
+			<div class="live-list">
+				{#each liveMatches as m (m.id)}
+					<a class="live-item" href={liveHref(m.id)}>
+						<div class="live-item-top">
+							<span class="live-stage">{matchStageLabel(m)}</span>
+							<span class="live-badge">LIVE</span>
+						</div>
+						<div class="live-teams">
+							<span class="live-team">
+								{#if team(m.homeTeam)}
+									<Flag iso2={team(m.homeTeam)?.iso2 ?? ''} code={team(m.homeTeam)?.fifaCode ?? ''} size={20} />
+								{/if}
+								<b>{liveTeamLabel(m, 'h')}</b>
+							</span>
+							<strong class="live-score digits">{liveScoreText(m)}</strong>
+							<span class="live-team away">
+								<b>{liveTeamLabel(m, 'a')}</b>
+								{#if team(m.awayTeam)}
+									<Flag iso2={team(m.awayTeam)?.iso2 ?? ''} code={team(m.awayTeam)?.fifaCode ?? ''} size={20} />
+								{/if}
+							</span>
+						</div>
+						<div class="live-foot">
+							{#if m.myPoints !== null}
+								<span class="live-mypoints" class:plus={m.myPoints > 0}>{m.myPoints > 0 ? `+${m.myPoints}` : m.myPoints} pts so far</span>
+							{:else}
+								<span class="live-mypoints muted">No tip</span>
+							{/if}
+							<span class="live-cta">See friends' tips <ArrowUpRight size={14} /></span>
+						</div>
+					</a>
+				{/each}
+			</div>
+		</section>
+	{/if}
+
 	<!-- Main task panel: what matters right now. -->
 	<section
 		class="card tasks tile action-card home-span-primary"
@@ -914,49 +946,6 @@
 			{nowHero.label}
 		</a>
 	</section>
-
-	{#if liveMatches.length > 0}
-		<section class="card tile live-card home-span-primary">
-			<div class="hd">
-				<h3><span class="live-dot" aria-hidden="true"></span> Live now</h3>
-				<span class="hdlink as-text">{liveMatches.length === 1 ? '1 match' : `${liveMatches.length} matches`}</span>
-			</div>
-
-			<div class="live-list">
-				{#each liveMatches as m (m.id)}
-					<a class="live-item" href={liveHref(m.id)}>
-						<div class="live-item-top">
-							<span class="live-stage">{matchStageLabel(m)}</span>
-							<span class="live-badge">LIVE</span>
-						</div>
-						<div class="live-teams">
-							<span class="live-team">
-								{#if team(m.homeTeam)}
-									<Flag iso2={team(m.homeTeam)?.iso2 ?? ''} code={team(m.homeTeam)?.fifaCode ?? ''} size={20} />
-								{/if}
-								<b>{liveTeamLabel(m, 'h')}</b>
-							</span>
-							<strong class="live-score digits">{liveScoreText(m)}</strong>
-							<span class="live-team away">
-								<b>{liveTeamLabel(m, 'a')}</b>
-								{#if team(m.awayTeam)}
-									<Flag iso2={team(m.awayTeam)?.iso2 ?? ''} code={team(m.awayTeam)?.fifaCode ?? ''} size={20} />
-								{/if}
-							</span>
-						</div>
-						<div class="live-foot">
-							{#if m.myPoints !== null}
-								<span class="live-mypoints" class:plus={m.myPoints > 0}>{m.myPoints > 0 ? `+${m.myPoints}` : m.myPoints} pts so far</span>
-							{:else}
-								<span class="live-mypoints muted">No tip</span>
-							{/if}
-							<span class="live-cta">See friends' tips <ArrowUpRight size={14} /></span>
-						</div>
-					</a>
-				{/each}
-			</div>
-		</section>
-	{/if}
 
 	{#if !tournamentFinished && tournamentStarted && activeLeague && leagueProgress && leagueProgress.events.length > 0}
 		<section class="card tile progress-card home-span-support">

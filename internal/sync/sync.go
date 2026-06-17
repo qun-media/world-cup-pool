@@ -23,9 +23,9 @@ import (
 // anyMatchEligible and the 100/day cap, so the true call rate is much lower.
 const cronExpr = "*/30 * * * *"
 
-// liveCronExpr fires every 3 minutes but only does work when a match is live
+// liveCronExpr fires every 2 minutes but only does work when a match is live
 // (gated by anyMatchLive), keeping the live panel's scores fresh.
-const liveCronExpr = "*/3 * * * *"
+const liveCronExpr = "*/2 * * * *"
 
 const apiDailyLimit = 100
 

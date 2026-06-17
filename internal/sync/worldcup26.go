@@ -51,14 +51,14 @@ type wc26Game struct {
 	AwayNameEn  string `json:"away_team_name_en"`
 }
 
-// inProgress reports whether the feed considers this game live (kicked off,
-// not yet finished). Finished games are left to the authoritative finalizer.
-func (g wc26Game) inProgress() bool {
-	if strings.EqualFold(g.Finished, "TRUE") {
-		return false
-	}
-	te := strings.ToLower(strings.TrimSpace(g.TimeElapsed))
-	return te != "" && te != "notstarted"
+// unfinished reports whether the feed has NOT yet marked this game finished.
+// We deliberately ignore the feed's `time_elapsed` clock — it lags and is often
+// "notstarted" even after a goal — and instead decide "has it kicked off?" from
+// our own match kickoff time (see worldcup26LiveSync). That picks up scores
+// sooner without trusting an unreliable field. Finished games are always left
+// to the authoritative finalizer.
+func (g wc26Game) unfinished() bool {
+	return !strings.EqualFold(g.Finished, "TRUE")
 }
 
 // worldcup26LiveSync pulls current scores and marks in-progress matches live.
@@ -110,9 +110,10 @@ func worldcup26LiveSync(ctx context.Context, app core.App) error {
 		}
 	}
 
+	now := time.Now().UTC()
 	updated := 0
 	for _, g := range doc.Games {
-		if !g.inProgress() {
+		if !g.unfinished() {
 			continue
 		}
 		// Match by FIFA number (knockout rows carry num 73+), then fall back to
@@ -126,6 +127,13 @@ func worldcup26LiveSync(ctx context.Context, app core.App) error {
 			rec = byPair[canonName(g.HomeNameEn)+"|"+canonName(g.AwayNameEn)]
 		}
 		if rec == nil {
+			continue
+		}
+		// Has it actually kicked off? We trust our own kickoff time rather than
+		// the feed's clock, so a not-yet-started match never gets marked live
+		// (and stamped with a stray 0–0) just because the feed lists it.
+		kickoff := rec.GetDateTime("kickoff").Time()
+		if kickoff.IsZero() || now.Before(kickoff) {
 			continue
 		}
 		hs, errH := strconv.Atoi(strings.TrimSpace(g.HomeScore))

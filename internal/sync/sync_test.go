@@ -29,23 +29,24 @@ func testMatchRecord(stage string) *core.Record {
 	return record
 }
 
-func TestWc26InProgress(t *testing.T) {
+func TestWc26Unfinished(t *testing.T) {
+	// time_elapsed is intentionally ignored — "has it kicked off?" is decided
+	// from our own match kickoff, so the feed only tells us finished vs not.
 	tests := []struct {
 		name string
 		g    wc26Game
 		want bool
 	}{
-		{"not started", wc26Game{Finished: "FALSE", TimeElapsed: "notstarted"}, false},
 		{"finished", wc26Game{Finished: "TRUE", TimeElapsed: "finished"}, false},
+		{"finished lowercase", wc26Game{Finished: "true"}, false},
+		{"not started", wc26Game{Finished: "FALSE", TimeElapsed: "notstarted"}, true},
 		{"first half", wc26Game{Finished: "FALSE", TimeElapsed: "45"}, true},
-		{"half time", wc26Game{Finished: "FALSE", TimeElapsed: "HT"}, true},
-		{"stoppage", wc26Game{Finished: "FALSE", TimeElapsed: "90+2"}, true},
-		{"empty elapsed", wc26Game{Finished: "FALSE", TimeElapsed: ""}, false},
+		{"empty elapsed", wc26Game{Finished: "FALSE", TimeElapsed: ""}, true},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := tc.g.inProgress(); got != tc.want {
-				t.Fatalf("inProgress() = %v, want %v", got, tc.want)
+			if got := tc.g.unfinished(); got != tc.want {
+				t.Fatalf("unfinished() = %v, want %v", got, tc.want)
 			}
 		})
 	}
