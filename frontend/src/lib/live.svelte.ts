@@ -2,8 +2,9 @@ import { api, type LiveMatch } from './api';
 
 // Polls /api/live for matches in progress. The endpoint reads only from our DB
 // (no external API cost); a background sync keeps those scores fresh. Shared by
-// the dashboard live panel and the live match page.
-const POLL_MS = 60_000;
+// the dashboard live panel and the live match page. We poll faster than the
+// backend's once-a-minute live sync so a fresh score surfaces promptly.
+const POLL_MS = 30_000;
 
 class LiveStore {
 	matches = $state<LiveMatch[]>([]);

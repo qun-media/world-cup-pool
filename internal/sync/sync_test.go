@@ -1,6 +1,10 @@
 package sync
 
 import (
+	"context"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/pocketbase/pocketbase/core"
@@ -50,6 +54,52 @@ func TestWc26Unfinished(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestFetchWc26GamesFailover(t *testing.T) {
+	const oneGame = `{"games":[{"id":"1","home_score":"1","away_score":"0","finished":"FALSE","home_team_name_en":"A","away_team_name_en":"B"}]}`
+
+	down := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "boom", http.StatusBadGateway)
+	}))
+	defer down.Close()
+	empty := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"games":[]}`)
+	}))
+	defer empty.Close()
+	ok := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, oneGame)
+	}))
+	defer ok.Close()
+
+	t.Run("falls back past a down mirror", func(t *testing.T) {
+		games, src, err := fetchWc26GamesFrom(context.Background(), []string{down.URL, ok.URL})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if src != ok.URL {
+			t.Fatalf("src = %q, want %q", src, ok.URL)
+		}
+		if len(games) != 1 || games[0].HomeScore != "1" {
+			t.Fatalf("games = %+v, want one game with home_score 1", games)
+		}
+	})
+
+	t.Run("treats an empty payload as a soft failure", func(t *testing.T) {
+		_, src, err := fetchWc26GamesFrom(context.Background(), []string{empty.URL, ok.URL})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if src != ok.URL {
+			t.Fatalf("src = %q, want %q (should skip the empty mirror)", src, ok.URL)
+		}
+	})
+
+	t.Run("errors when every mirror fails", func(t *testing.T) {
+		if _, _, err := fetchWc26GamesFrom(context.Background(), []string{down.URL, empty.URL}); err == nil {
+			t.Fatal("expected an error when all mirrors fail")
+		}
+	})
 }
 
 func TestApplyResultStoresFinishedGroupResult(t *testing.T) {

@@ -34,7 +34,7 @@
 		if (!id) return;
 		loaded = false;
 		void refresh(id);
-		const t = setInterval(() => void refresh(id), 60_000);
+		const t = setInterval(() => void refresh(id), 30_000);
 		return () => clearInterval(t);
 	});
 
