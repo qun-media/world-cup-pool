@@ -41,9 +41,24 @@
 
 	let matchPoints = [
 		{ label: 'Correct outcome', value: '3', detail: '1/X/2 in group stage, the team that advances in knockout' },
-		{ label: 'Exact score', value: '+1', detail: 'same score as the final result' },
+		{ label: 'Exact score', value: '+1', detail: 'same score as the reference result' },
 		{ label: 'Total goals', value: '+1', detail: 'for example 2-1 and 3-0 both count as 3 goals' },
 		{ label: 'Correct goal difference', value: '+1', detail: 'for example a one-goal win or a draw' }
+	];
+
+	let knockoutScenarios = [
+		{
+			title: 'Decided in 90 minutes',
+			text: 'Scored exactly like the group stage: the three +1 points compare your 90-minute prediction to the 90-minute result.'
+		},
+		{
+			title: 'Goes to extra time',
+			text: 'Extra-time goals count. The +1 points use the full score after 120 minutes (including the first-90 goals). If you predicted a draw, your extra-time score is compared; if you predicted a 90-minute winner, that score is compared against the after-extra-time result.'
+		},
+		{
+			title: 'Decided on penalties',
+			text: 'Penalty kicks are never counted as goals — they only decide who goes through. The +1 points use the level score at the end of extra time, and the 3 points go to whoever picked the team that advances.'
+		}
 	];
 
 	let forecastPoints = [
@@ -142,7 +157,7 @@
 					<Volleyball size={20} />
 					<h3>Match tips</h3>
 				</div>
-				<p>Max 6 points per match. In knockout, the advancing team counts as the correct outcome.</p>
+				<p>Max 6 points per match. The 3 points are for the outcome (1/X/2 in groups, the team that advances in knockout); the three +1 points reward how close your score is. See the knockout rules below for which scoreline counts.</p>
 				<div class="point-list">
 					{#each matchPoints as point}
 						<div class="point-row">
@@ -172,6 +187,29 @@
 				</div>
 			</article>
 		</div>
+
+		<article class="card knockout-panel">
+			<div class="panel-title">
+				<Network size={20} />
+				<h3>Knockout matches</h3>
+			</div>
+			<p>
+				You predict a knockout game in steps: the 90-minute score, then — if you
+				picked a draw — the score after extra time, and finally the penalty
+				winner if it is still level. The team that advances is set automatically.
+				The 3 outcome points always go to whoever picks the team that goes
+				through, however it is decided. The +1 points depend on how far the match
+				actually went:
+			</p>
+			<div class="knockout-grid">
+				{#each knockoutScenarios as scenario}
+					<div>
+						<span>{scenario.title}</span>
+						<small>{scenario.text}</small>
+					</div>
+				{/each}
+			</div>
+		</article>
 
 		<div class="card tie-break">
 			<Medal size={18} />
@@ -398,6 +436,35 @@
 		margin-top: 0.5rem;
 		font-size: 1.35rem;
 		color: var(--accent-2);
+	}
+	.knockout-panel {
+		margin-top: 0.75rem;
+	}
+	.knockout-panel p {
+		margin: 0.45rem 0 0;
+		line-height: 1.48;
+		color: var(--muted);
+	}
+	.knockout-grid {
+		display: grid;
+		gap: 0.55rem;
+		margin-top: 0.9rem;
+	}
+	.knockout-grid div {
+		padding: 0.75rem;
+		border-radius: var(--radius-sm);
+		background: var(--surface-2);
+	}
+	.knockout-grid span {
+		display: block;
+		font-weight: 900;
+		color: var(--accent-2);
+	}
+	.knockout-grid small {
+		display: block;
+		margin-top: 0.25rem;
+		line-height: 1.4;
+		color: var(--muted);
 	}
 	.tie-break {
 		display: flex;
