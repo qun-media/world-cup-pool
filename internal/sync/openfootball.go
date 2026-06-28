@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -35,26 +36,35 @@ type ofLiveMatch struct {
 
 func pi(v int) *int { return &v }
 
-// openfootballSync pulls openfootball's live JSON and applies any results.
-// Idempotent: a record is only saved when something actually changed.
-func openfootballSync(ctx context.Context, app core.App) error {
+// fetchOpenfootballMatches pulls and decodes openfootball's worldcup.json.
+func fetchOpenfootballMatches(ctx context.Context) ([]ofLiveMatch, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ofLiveURL, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	req.Header.Set("User-Agent", "wm-tips/1.0")
 	resp, err := (&http.Client{Timeout: 20 * time.Second}).Do(req)
 	if err != nil {
-		return fmt.Errorf("openfootball fetch: %w", err)
+		return nil, fmt.Errorf("openfootball fetch: %w", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("openfootball: status %d", resp.StatusCode)
+		return nil, fmt.Errorf("openfootball: status %d", resp.StatusCode)
 	}
 	var doc struct {
 		Matches []ofLiveMatch `json:"matches"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&doc); err != nil {
+		return nil, err
+	}
+	return doc.Matches, nil
+}
+
+// openfootballSync pulls openfootball's live JSON and applies any results.
+// Idempotent: a record is only saved when something actually changed.
+func openfootballSync(ctx context.Context, app core.App) error {
+	ofMatches, err := fetchOpenfootballMatches(ctx)
+	if err != nil {
 		return err
 	}
 
@@ -68,7 +78,7 @@ func openfootballSync(ctx context.Context, app core.App) error {
 	}
 
 	updated := 0
-	for _, m := range doc.Matches {
+	for _, m := range ofMatches {
 		if m.Score == nil || len(m.Score.FT) != 2 {
 			continue // not played yet
 		}
@@ -98,6 +108,97 @@ func openfootballSync(ctx context.Context, app core.App) error {
 	}
 	if err := ResolveBracket(app); err != nil {
 		return err
+	}
+	// Defence-in-depth: cross-check our computed knockout matchups against
+	// openfootball's published teams and correct any disagreement.
+	if err := reconcileKnockoutTeams(app, ofMatches); err != nil {
+		return err
+	}
+	return nil
+}
+
+// verifyKnockoutFromOpenfootball fetches openfootball and reconciles our
+// knockout matchups against it. Used by results sources other than openfootball
+// (e.g. API-Football) so the cross-check runs no matter where scores come from.
+func verifyKnockoutFromOpenfootball(ctx context.Context, app core.App) error {
+	ofMatches, err := fetchOpenfootballMatches(ctx)
+	if err != nil {
+		return err
+	}
+	return reconcileKnockoutTeams(app, ofMatches)
+}
+
+// reconcileKnockoutTeams treats openfootball as the authoritative oracle for
+// who plays whom in the knockout stage. openfootball fills each knockout match's
+// team1/team2 with real team names once the feeding round is decided (keyed by
+// the same `num` we use), so once both sides resolve to teams we recognise we
+// make our record agree — logging loudly on any correction. We only touch
+// matches that haven't been played yet: a finished match's teams are already
+// settled, and rewriting them would corrupt its result. This is a safety net
+// over our own standings-based ResolveBracket, not a replacement for it (early
+// rounds still resolve instantly from results before openfootball updates).
+// koCorrection decides whether one openfootball knockout match should drive a
+// correction, and the team ids it should resolve to. It returns ok=false when
+// either side is still an openfootball placeholder (W74, 1A, 3A/B/… — not a name
+// we recognise) or when the match is already played (teams settled).
+func koCorrection(ofTeam1, ofTeam2 string, nameToID map[string]string, finished bool) (homeID, awayID string, ok bool) {
+	h, okH := nameToID[ofTeam1]
+	a, okA := nameToID[ofTeam2]
+	if !okH || !okA || finished {
+		return "", "", false
+	}
+	return h, a, true
+}
+
+func reconcileKnockoutTeams(app core.App, ofMatches []ofLiveMatch) error {
+	teams, err := app.FindRecordsByFilter("teams", "id != ''", "", 0, 0)
+	if err != nil {
+		return err
+	}
+	nameToID := make(map[string]string, len(teams))
+	for _, t := range teams {
+		nameToID[t.GetString("name")] = t.Id
+	}
+
+	byNum := map[int]*core.Record{}
+	recs, err := app.FindRecordsByFilter("matches", "stage != 'group'", "", 0, 0)
+	if err != nil {
+		return err
+	}
+	for _, r := range recs {
+		if n := r.GetInt("num"); n > 0 {
+			byNum[n] = r
+		}
+	}
+
+	for _, m := range ofMatches {
+		rec := byNum[m.Num]
+		if rec == nil || rec.GetString("stage") == "group" {
+			continue
+		}
+		finished := rec.GetString("finalizedAt") != "" || rec.GetString("status") == "finished"
+		homeID, awayID, ok := koCorrection(m.Team1, m.Team2, nameToID, finished)
+		if !ok {
+			continue
+		}
+		changed := false
+		if rec.GetString("homeTeam") != homeID {
+			log.Printf("[sync] knockout match %d home corrected to openfootball: %q -> %q",
+				m.Num, rec.GetString("homeTeam"), m.Team1)
+			rec.Set("homeTeam", homeID)
+			changed = true
+		}
+		if rec.GetString("awayTeam") != awayID {
+			log.Printf("[sync] knockout match %d away corrected to openfootball: %q -> %q",
+				m.Num, rec.GetString("awayTeam"), m.Team2)
+			rec.Set("awayTeam", awayID)
+			changed = true
+		}
+		if changed {
+			if err := app.Save(rec); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }

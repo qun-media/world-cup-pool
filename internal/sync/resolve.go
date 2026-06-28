@@ -2,7 +2,6 @@ package sync
 
 import (
 	"log"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -42,66 +41,28 @@ func ResolveBracket(app core.App) error {
 		}
 	}
 
-	first, second, thirds, thirdTeam := groupStandings(matches)
+	first, second, thirds, thirdTeam, groupStageComplete := groupStandings(matches)
 
-	// Resolve the 8 R32 third-slots. With all 8 best thirds known, use FIFA's
-	// official Annex C table; otherwise fall back to a deterministic greedy
-	// fill (only hit while the group stage is still incomplete, when the
-	// bracket can't be resolved yet anyway).
-	quals := make([]string, 0, len(thirds))
-	for _, st := range thirds {
-		quals = append(quals, st.group)
-	}
+	// Resolve the 8 R32 third-slots. A best-third slot is only knowable once the
+	// ENTIRE group stage is finished: the 8th-vs-9th third cut depends on all 12
+	// groups, so any earlier assignment (from a partial set of thirds) would be a
+	// guess that the official table later contradicts. We therefore resolve the
+	// third-slots exclusively from FIFA's official Annex C table, and only once
+	// every group is complete — at which point the lookup is guaranteed to hit.
 	thirdByNum := map[int]string{}
-	if tbl, ok := bracket.Lookup(quals); ok {
-		for _, m := range matches {
-			if m.GetString("stage") != "R32" {
-				continue
-			}
-			home, away := m.GetString("homeLabel"), m.GetString("awayLabel")
-			isSlot := (strings.HasPrefix(home, "3") && strings.Contains(home, "/")) ||
-				(strings.HasPrefix(away, "3") && strings.Contains(away, "/"))
-			if !isSlot {
-				continue
-			}
-			if w, ok := bracket.WinnerLetter(home, away); ok {
-				thirdByNum[m.GetInt("num")] = thirdTeam[tbl[w]]
-			}
+	if groupStageComplete {
+		quals := make([]string, 0, len(thirds))
+		for _, st := range thirds {
+			quals = append(quals, st.group)
 		}
-	} else {
-		thirdQueue := make([]string, len(quals))
-		copy(thirdQueue, quals)
-		r32 := []*core.Record{}
-		for _, m := range matches {
-			if m.GetString("stage") == "R32" {
-				r32 = append(r32, m)
-			}
-		}
-		sort.Slice(r32, func(i, j int) bool {
-			return r32[i].GetInt("num") < r32[j].GetInt("num")
-		})
-		for _, m := range r32 {
-			for _, lbl := range []string{m.GetString("homeLabel"), m.GetString("awayLabel")} {
-				if !strings.HasPrefix(lbl, "3") || !strings.Contains(lbl, "/") {
+		if tbl, ok := bracket.Lookup(quals); ok {
+			for _, m := range matches {
+				if m.GetString("stage") != "R32" {
 					continue
 				}
-				allowed := strings.Split(strings.TrimPrefix(lbl, "3"), "/")
-				for i, g := range thirdQueue {
-					if g == "" {
-						continue
-					}
-					ok := false
-					for _, a := range allowed {
-						if g == a {
-							ok = true
-							break
-						}
-					}
-					if ok {
-						thirdByNum[m.GetInt("num")] = thirdTeam[g]
-						thirdQueue[i] = ""
-						break
-					}
+				home, away := m.GetString("homeLabel"), m.GetString("awayLabel")
+				if w, ok := bracket.WinnerLetter(home, away); ok {
+					thirdByNum[m.GetInt("num")] = thirdTeam[tbl[w]]
 				}
 			}
 		}
@@ -144,23 +105,45 @@ func ResolveBracket(app core.App) error {
 		return ""
 	}
 
+	// isThirdSlot reports whether a side's label is a best-third placeholder
+	// (e.g. "3A/B/C/D/F"). Such a side is resolved authoritatively from the
+	// official table once the group stage is complete, so we OVERWRITE any value
+	// a previous (premature) run may have written — every other label resolves
+	// to a stable team and so is only filled when still empty.
+	isThirdSlot := func(label string) bool {
+		return strings.HasPrefix(label, "3") && strings.Contains(label, "/")
+	}
+	setSide := func(m *core.Record, field, label string, num int) bool {
+		if isThirdSlot(label) {
+			if !groupStageComplete {
+				return false
+			}
+			id := thirdByNum[num]
+			if id == "" || m.GetString(field) == id {
+				return false
+			}
+			m.Set(field, id)
+			return true
+		}
+		if m.GetString(field) != "" {
+			return false
+		}
+		id := resolve(label, num)
+		if id == "" {
+			return false
+		}
+		m.Set(field, id)
+		return true
+	}
+
 	for _, m := range matches {
 		if m.GetString("stage") == "group" {
 			continue
 		}
-		changed := false
 		num := m.GetInt("num")
-		if m.GetString("homeTeam") == "" {
-			if id := resolve(m.GetString("homeLabel"), num); id != "" {
-				m.Set("homeTeam", id)
-				changed = true
-			}
-		}
-		if m.GetString("awayTeam") == "" {
-			if id := resolve(m.GetString("awayLabel"), num); id != "" {
-				m.Set("awayTeam", id)
-				changed = true
-			}
+		changed := setSide(m, "homeTeam", m.GetString("homeLabel"), num)
+		if setSide(m, "awayTeam", m.GetString("awayLabel"), num) {
+			changed = true
 		}
 		if changed {
 			if err := app.Save(m); err != nil {
@@ -184,12 +167,15 @@ type standing struct {
 // (including head-to-head) to internal/standings so bracket resolution and
 // Forecast scoring always agree, and logs any group that needed a non-official
 // tiebreak so an admin can verify/override.
-func groupStandings(matches []*core.Record) (first, second map[string]string, thirds []standing, thirdTeam map[string]string) {
+func groupStandings(matches []*core.Record) (first, second map[string]string, thirds []standing, thirdTeam map[string]string, complete bool) {
 	first = map[string]string{}
 	second = map[string]string{}
 	thirdTeam = map[string]string{}
 
 	order, ranked, ambiguous := standings.GroupTables(standings.FromRecords(matches))
+	// GroupTables only includes fully-played groups, so all 12 present means the
+	// entire group stage is finished and the best-third cut is final.
+	complete = len(order) == 12
 	for g, ids := range order {
 		if len(ids) >= 2 {
 			first[g] = ids[0]
@@ -206,5 +192,5 @@ func groupStandings(matches []*core.Record) (first, second map[string]string, th
 	if len(ambiguous) > 0 {
 		log.Printf("[sync] group ranking needed a non-official tiebreak (fair play / lots) for %v — verify and override if needed", ambiguous)
 	}
-	return first, second, thirds, thirdTeam
+	return first, second, thirds, thirdTeam, complete
 }

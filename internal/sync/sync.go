@@ -372,6 +372,11 @@ func SyncOnce(ctx context.Context, app core.App, client *football.Client) error 
 	if err := ResolveBracket(app); err != nil {
 		log.Printf("[sync] resolve bracket: %v", err)
 	}
+	// Cross-check the computed knockout matchups against openfootball. Best-effort:
+	// a fetch hiccup must not fail an otherwise-good API-Football sync.
+	if err := verifyKnockoutFromOpenfootball(ctx, app); err != nil {
+		log.Printf("[sync] openfootball knockout verify: %v", err)
+	}
 	log.Printf("[sync] fixtures=%d updated=%d", len(fixtures), updated)
 	return nil
 }
