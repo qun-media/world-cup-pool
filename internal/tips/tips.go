@@ -251,6 +251,28 @@ func Register(app core.App, se *core.ServeEvent) {
 		if def != nil {
 			cfg = scoring.LoadConfig(def)
 		}
+		// For a live (not-yet-finalized) knockout match, the real `advancer`
+		// field is still empty — it is only set when the match resolves — so the
+		// pure scorer can't award the 3 "who advances" points yet. Project a
+		// provisional advancer from the CURRENT score (whoever currently leads
+		// the reference score) so the live points reflect what they'd be if the
+		// match ended now. A currently level game leaves advancer empty: it is
+		// genuinely undecided (would go to ET/pens), so those 3 points stay
+		// pending. This only mutates the request-scoped record in memory and is
+		// never saved; matchScoreInfo doesn't read `advancer`, so display is
+		// unaffected.
+		if match.GetString("stage") != "group" &&
+			match.GetString("finalizedAt") == "" && match.GetString("advancer") == "" {
+			refH, refA := match.GetInt("ftHome"), match.GetInt("ftAway")
+			if match.GetInt("etHome") != 0 || match.GetInt("etAway") != 0 {
+				refH, refA = match.GetInt("etHome"), match.GetInt("etAway")
+			}
+			if refH > refA {
+				match.Set("advancer", match.GetString("homeTeam"))
+			} else if refA > refH {
+				match.Set("advancer", match.GetString("awayTeam"))
+			}
+		}
 		pointsFor := func(t *core.Record) int {
 			if def == nil {
 				return -1
